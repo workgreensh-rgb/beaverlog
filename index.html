@@ -42,10 +42,59 @@
     font-weight: 700; letter-spacing: -0.01em; line-height: 1.25;
   }
   .tagline { color: var(--paper-dim); font-size: 14px; margin-top: 8px; }
+  .byline { font-size: 12.5px; color: #7d6c54; margin-top: 7px; }
+  .byline .role { letter-spacing: 0.14em; color: var(--river); font-size: 10.5px; margin-right: 6px; }
   .headrow { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
 
   /* 잠금 해제 */
-  .lockbox { flex-shrink: 0; margin-top: 6px; }
+  .lockbox { flex-shrink: 0; margin-top: 6px; display: flex; gap: 6px; align-items: flex-start; }
+  .writebtn {
+    background: none; border: 1px solid var(--log-edge); color: var(--paper-dim);
+    border-radius: 999px; padding: 7px 14px; font-size: 12px; cursor: pointer;
+    font-family: inherit; transition: color .15s, border-color .15s;
+  }
+  .writebtn:hover, .writebtn:focus-visible { color: var(--amber); border-color: var(--amber); outline: none; }
+
+  /* 글쓰기 에디터 */
+  .editor {
+    display: none; background: var(--log); border: 1px solid var(--log-edge);
+    border-radius: var(--radius); padding: 20px 22px; margin-bottom: 22px;
+  }
+  .editor.show { display: block; }
+  .editor h3 { font-family: 'Gowun Batang', serif; font-size: 17px; margin-bottom: 14px; color: var(--paper); }
+  .editor .row { display: flex; gap: 8px; margin-bottom: 10px; flex-wrap: wrap; }
+  .editor input[type="text"], .editor textarea, .editor select {
+    width: 100%; background: var(--bark); border: 1px solid var(--log-edge);
+    border-radius: 10px; color: var(--paper); padding: 10px 12px; font-size: 14px;
+    font-family: inherit;
+  }
+  .editor input:focus-visible, .editor textarea:focus-visible, .editor select:focus-visible { outline: none; border-color: var(--river); }
+  .editor textarea { min-height: 140px; resize: vertical; line-height: 1.6; }
+  .editor select { width: auto; }
+  .editor label.chk { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; color: var(--paper-dim); cursor: pointer; }
+  .editor .filelabel {
+    display: inline-flex; align-items: center; gap: 6px; font-size: 13px; color: var(--paper-dim);
+    border: 1px dashed var(--log-edge); border-radius: 10px; padding: 9px 13px; cursor: pointer;
+  }
+  .editor .filelabel:hover { color: var(--river); border-color: var(--river); }
+  .editor .filelist { font-size: 12.5px; color: var(--paper-dim); margin-top: 6px; line-height: 2; }
+  .editor .inspin {
+    background: none; border: 1px solid var(--log-edge); color: var(--river);
+    border-radius: 8px; padding: 3px 9px; font-size: 11.5px; cursor: pointer;
+    font-family: inherit; margin-left: 6px;
+  }
+  .editor .inspin:hover { border-color: var(--river); }
+  .editor .actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 12px; align-items: center; }
+  .editor .status { font-size: 12.5px; color: var(--paper-dim); margin-right: auto; }
+  .editor .publish {
+    background: var(--river); border: none; color: var(--bark); font-weight: 600;
+    border-radius: 10px; padding: 10px 18px; font-size: 13.5px; cursor: pointer; font-family: inherit;
+  }
+  .editor .publish:disabled { opacity: 0.5; cursor: default; }
+  .editor .cancel {
+    background: none; border: 1px solid var(--log-edge); color: var(--paper-dim);
+    border-radius: 10px; padding: 10px 14px; font-size: 13px; cursor: pointer; font-family: inherit;
+  }
   .lockbtn {
     background: none; border: 1px solid var(--log-edge); color: var(--paper-dim);
     border-radius: 999px; padding: 7px 14px; font-size: 12px; cursor: pointer;
@@ -108,7 +157,71 @@
   .post.lockedcard { opacity: 0.65; }
   .post.lockedcard h2 { color: var(--paper-dim); font-size: 16px; }
 
+  .post .body a { color: var(--river); text-decoration: underline; text-underline-offset: 3px; word-break: break-all; }
+
+  /* 첨부: 사진 그리드 */
+  .photos { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 8px; margin-top: 12px; }
+  .photos.single { grid-template-columns: 1fr; }
+  .photos a { display: block; border-radius: 10px; overflow: hidden; border: 1px solid var(--log-edge); }
+  .photos img { width: 100%; height: 100%; object-fit: cover; display: block; aspect-ratio: 4/3; background: var(--bark); }
+  .photos.single img { aspect-ratio: auto; max-height: 480px; object-fit: contain; }
+
+  /* 첨부: 파일 버튼 */
+  .files { display: flex; flex-direction: column; gap: 6px; margin-top: 12px; }
+  .files a {
+    display: inline-flex; align-items: center; gap: 8px;
+    background: var(--bark); border: 1px solid var(--log-edge); border-radius: 10px;
+    padding: 9px 13px; font-size: 13px; color: var(--paper); text-decoration: none;
+  }
+  .files a:hover { border-color: var(--river); color: var(--river); }
+
   .empty { text-align: center; color: var(--paper-dim); padding: 60px 0 40px; font-size: 14px; }
+
+  /* 액션바: 좋아요·댓글·공유 */
+  .actbar { display: flex; gap: 8px; margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--log-edge); }
+  .actbar button {
+    background: none; border: 1px solid var(--log-edge); color: var(--paper-dim);
+    border-radius: 999px; padding: 6px 13px; font-size: 12.5px; cursor: pointer;
+    font-family: inherit; transition: all .15s;
+  }
+  .actbar button:hover { border-color: var(--river); color: var(--river); }
+  .actbar button.liked { border-color: #d4826f; color: #d4826f; }
+
+  /* 댓글 */
+  .cmts { display: none; margin-top: 12px; }
+  .cmts.show { display: block; }
+  .cmt { padding: 9px 0; border-top: 1px dashed var(--log-edge); font-size: 13px; }
+  .cmt .who { color: var(--river); font-weight: 600; font-size: 12.5px; margin-right: 8px; }
+  .cmt .when { color: var(--paper-dim); font-size: 11px; }
+  .cmt .del { background: none; border: none; color: var(--paper-dim); font-size: 11px; cursor: pointer; margin-left: 8px; font-family: inherit; }
+  .cmt .del:hover { color: #d4826f; }
+  .cmt p { margin-top: 3px; white-space: pre-wrap; word-break: break-word; }
+  .cmtform { display: flex; gap: 6px; margin-top: 10px; flex-wrap: wrap; }
+  .cmtform input, .cmtform textarea {
+    background: var(--bark); border: 1px solid var(--log-edge); border-radius: 10px;
+    color: var(--paper); padding: 8px 11px; font-size: 13px; font-family: inherit;
+  }
+  .cmtform input { width: 90px; }
+  .cmtform textarea { flex: 1; min-width: 200px; min-height: 38px; resize: vertical; }
+  .cmtform input:focus-visible, .cmtform textarea:focus-visible { outline: none; border-color: var(--river); }
+  .cmtform button {
+    background: var(--river); border: none; color: var(--bark); font-weight: 600;
+    border-radius: 10px; padding: 8px 14px; font-size: 12.5px; cursor: pointer; font-family: inherit;
+  }
+
+  .backlink { display: inline-block; margin-bottom: 18px; font-size: 13px; color: var(--river); text-decoration: none; border: 1px solid var(--log-edge); border-radius: 999px; padding: 6px 14px; }
+  .backlink:hover { border-color: var(--river); }
+
+  /* 우측 하단 방문자 배지 */
+  .visits {
+    position: fixed; right: 16px; bottom: 16px; z-index: 50;
+    background: var(--log); border: 1px solid var(--log-edge);
+    border-radius: 999px; padding: 8px 15px;
+    font-size: 12px; color: var(--paper-dim); line-height: 1;
+    display: flex; align-items: center; gap: 10px;
+  }
+  .visits b { color: var(--paper); font-weight: 600; }
+  .visits .sep { color: var(--log-edge); }
   .empty .mark { font-size: 34px; display: block; margin-bottom: 10px; }
 
   footer {
@@ -130,8 +243,11 @@
         <div class="eyebrow">Beaverlog — Study · Diary · Call</div>
         <h1>비버의 저장소 🦫</h1>
         <p class="tagline">거창한 계획 대신, 매일 하나씩 물어다 놓습니다.</p>
+        <p class="byline"><span class="role">주인장</span>비로(BEERO)</p>
       </div>
       <div class="lockbox">
+        <button class="writebtn" id="backupBtn" type="button" title="전체 글을 JSON 파일로 저장">💾</button>
+        <button class="writebtn" id="writeBtn" type="button">✏️ 글쓰기</button>
         <button class="lockbtn" id="lockBtn" type="button">🔒 열람</button>
         <div class="keyform" id="keyForm">
           <input type="password" id="keyInput" placeholder="비밀번호" autocomplete="off">
@@ -148,12 +264,39 @@
     <button data-f="콜" type="button">콜</button>
   </nav>
 
+  <section class="editor" id="editor">
+    <h3>새 통나무 🪵</h3>
+    <div class="row">
+      <input type="text" id="wTitle" placeholder="제목" maxlength="200">
+    </div>
+    <div class="row">
+      <textarea id="wBody" placeholder="본문 — 사진을 첨부하고 [본문에 넣기]를 누르면 커서 위치에 [사진1]이 들어가고, 그 자리에 사진이 표시됩니다. 링크는 자동으로 클릭 가능해집니다."></textarea>
+    </div>
+    <div class="row" style="align-items:center;">
+      <select id="wCat">
+        <option value="스터디">스터디</option>
+        <option value="일기" selected>일기</option>
+        <option value="콜">콜</option>
+      </select>
+      <label class="chk"><input type="checkbox" id="wPriv"> 비공개 🔒</label>
+      <label class="filelabel">📷 사진·파일 첨부<input type="file" id="wFiles" multiple accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.hwp,.txt,.zip" style="display:none;"></label>
+    </div>
+    <div class="filelist" id="wFileList"></div>
+    <div class="actions">
+      <span class="status" id="wStatus"></span>
+      <button class="cancel" id="wCancel" type="button">닫기</button>
+      <button class="publish" id="wGo" type="button">발행</button>
+    </div>
+  </section>
+
   <main id="list">
     <div class="empty"><span class="mark">🪵</span>불러오는 중…</div>
   </main>
 
   <footer>Beaverlog · Written via Telegram · One log a day</footer>
 </div>
+
+<div class="visits" id="visits" hidden>🐾 오늘 <b id="vToday">0</b><span class="sep">|</span>전체 <b id="vTotal">0</b></div>
 
 <script>
   let posts = [];
@@ -172,24 +315,107 @@
   function esc(s) {
     return (s || '').replace(/[&<>"']/g, (c) => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   }
+  // 이스케이프 후 URL만 클릭 가능한 링크로 변환
+  function linkify(s) {
+    return esc(s).replace(/(https?:\/\/[^\s<]+)/g, '<a href="$1" target="_blank" rel="noopener noreferrer">$1</a>');
+  }
+  function fileUrl(fid, name) {
+    const key = sessionStorage.getItem('beaverkey') || '';
+    let u = '/api/file?fid=' + encodeURIComponent(fid);
+    if (key) u += '&key=' + encodeURIComponent(key);
+    if (name) u += '&name=' + encodeURIComponent(name);
+    return u;
+  }
+  // 본문을 [사진N] 자리표 기준으로 쪼개서 글-사진-글 순서로 렌더링
+  function renderBodyWithInline(body, atts) {
+    const photos = (atts || []).filter((a) => a.type === 'photo');
+    const used = new Set();
+    let html = '';
+    const parts = (body || '').split(/(\[사진\d+\])/);
+    for (const part of parts) {
+      const m = part.match(/^\[사진(\d+)\]$/);
+      if (m) {
+        const idx = parseInt(m[1], 10) - 1;
+        if (photos[idx]) {
+          used.add(idx);
+          html += `<div class="photos single" style="margin:12px 0;"><a href="${fileUrl(photos[idx].file_id)}" target="_blank" rel="noopener"><img src="${fileUrl(photos[idx].file_id)}" alt="본문 사진" loading="lazy"></a></div>`;
+        }
+      } else if (part.trim()) {
+        html += `<div class="body" style="margin-top:6px;">${linkify(part.trim())}</div>`;
+      }
+    }
+    const rest = photos.filter((_, i) => !used.has(i));
+    const docs = (atts || []).filter((a) => a.type === 'document');
+    html += renderAttachments([...rest, ...docs]);
+    return html;
+  }
+
+  function renderAttachments(atts) {
+    if (!atts || !atts.length) return '';
+    const photos = atts.filter((a) => a.type === 'photo');
+    const docs = atts.filter((a) => a.type === 'document');
+    let html = '';
+    if (photos.length) {
+      html += `<div class="photos${photos.length === 1 ? ' single' : ''}">` +
+        photos.map((p) => `<a href="${fileUrl(p.file_id)}" target="_blank" rel="noopener"><img src="${fileUrl(p.file_id)}" alt="첨부 사진" loading="lazy"></a>`).join('') +
+        '</div>';
+    }
+    if (docs.length) {
+      html += '<div class="files">' +
+        docs.map((d) => `<a href="${fileUrl(d.file_id, d.file_name)}">📎 ${esc(d.file_name || '파일')}</a>`).join('') +
+        '</div>';
+    }
+    return html;
+  }
+
+  function fmtDateTime(iso) {
+    const d = new Date(iso);
+    return fmtDate(iso) + ' ' + String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0');
+  }
+  const liked = new Set(JSON.parse(localStorage.getItem('beaverlikes') || '[]'));
+  const permalinkId = new URLSearchParams(location.search).get('post');
 
   function render() {
-    const shown = posts.filter((p) => filter === '전체' || p.category === filter);
+    let shown = posts.filter((p) => filter === '전체' || p.category === filter);
+    let back = '';
+    if (permalinkId) {
+      shown = posts.filter((p) => String(p.id) === String(permalinkId));
+      back = `<a class="backlink" href="${location.pathname}">← 전체 글 보기</a>`;
+      if (!shown.length) {
+        list.innerHTML = back + '<div class="empty"><span class="mark">🪵</span>글을 찾을 수 없습니다.</div>';
+        return;
+      }
+    }
     if (!shown.length) {
       list.innerHTML = '<div class="empty"><span class="mark">🪵</span>아직 물어다 놓은 통나무가 없습니다.</div>';
       return;
     }
-    list.innerHTML = shown.map((p) => {
+    list.innerHTML = back + shown.map((p) => {
       if (p.locked) {
         return `<article class="post lockedcard" data-cat="${esc(p.category)}">
           <div class="post-meta"><span class="ring"></span><span class="cat">${esc(p.category)}</span><span class="date">${fmtDate(p.posted_at)}</span></div>
           <h2>비공개 글 🔒</h2>
         </article>`;
       }
-      return `<article class="post" data-cat="${esc(p.category)}">
+      const cms = p.comments || [];
+      const isLiked = liked.has(p.id);
+      return `<article class="post" data-cat="${esc(p.category)}" data-id="${p.id}">
         <div class="post-meta"><span class="ring"></span><span class="cat">${esc(p.category)}${p.is_private ? ' 🔒' : ''}</span><span class="date">${fmtDate(p.posted_at)}</span></div>
         <h2>${esc(p.title)}</h2>
-        ${p.body ? `<div class="body">${esc(p.body)}</div>` : ''}
+        ${renderBodyWithInline(p.body, p.attachments)}
+        <div class="actbar">
+          <button type="button" class="likebtn${isLiked ? ' liked' : ''}" data-id="${p.id}">${isLiked ? '❤️' : '🤍'} <span class="likeN">${p.likes || 0}</span></button>
+          <button type="button" class="cmtbtn" data-id="${p.id}">💬 ${cms.length}</button>
+          <button type="button" class="sharebtn" data-id="${p.id}" data-private="${p.is_private ? 1 : 0}">🔗 공유</button>
+        </div>
+        <div class="cmts${permalinkId ? ' show' : ''}" id="cmts-${p.id}">
+          ${cms.map((c) => `<div class="cmt"><span class="who">${esc(c.nickname)}</span><span class="when">${fmtDateTime(c.created_at)}</span>${unlocked ? `<button type="button" class="del" data-cid="${c.id}">삭제</button>` : ''}<p>${esc(c.body)}</p></div>`).join('')}
+          <div class="cmtform">
+            <input type="text" placeholder="닉네임" maxlength="20" class="cnick">
+            <textarea placeholder="댓글을 남겨주세요" maxlength="1000" class="cbody"></textarea>
+            <button type="button" class="cgo" data-id="${p.id}">등록</button>
+          </div>
+        </div>
       </article>`;
     }).join('');
   }
@@ -238,7 +464,242 @@
     render();
   });
 
+  // ── 글쓰기 에디터 ──
+  const editor = document.getElementById('editor');
+  const wFiles = document.getElementById('wFiles');
+  const wFileList = document.getElementById('wFileList');
+  const wStatus = document.getElementById('wStatus');
+  const wCat = document.getElementById('wCat');
+  const wPriv = document.getElementById('wPriv');
+  let pending = [];
+
+  document.getElementById('writeBtn').addEventListener('click', () => {
+    let key = sessionStorage.getItem('beaverkey') || '';
+    if (!key) {
+      key = prompt('주인장 비밀번호를 입력하세요');
+      if (!key) return;
+      sessionStorage.setItem('beaverkey', key.trim());
+      load();
+    }
+    editor.classList.toggle('show');
+    if (editor.classList.contains('show')) document.getElementById('wTitle').focus();
+  });
+  document.getElementById('wCancel').addEventListener('click', () => editor.classList.remove('show'));
+
+  wCat.addEventListener('change', () => { wPriv.checked = wCat.value === '콜'; });
+
+  document.getElementById('backupBtn').addEventListener('click', () => {
+    let key = sessionStorage.getItem('beaverkey') || '';
+    if (!key) {
+      key = (prompt('주인장 비밀번호를 입력하세요') || '').trim();
+      if (!key) return;
+      sessionStorage.setItem('beaverkey', key);
+    }
+    window.location.href = '/api/backup?key=' + encodeURIComponent(key);
+  });
+
+  // 사진은 발행 전에 브라우저에서 리사이즈(최대 1600px, JPEG)해서 용량을 줄인다
+  function compressImage(file) {
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      img.onload = () => {
+        const MAX = 1600;
+        let { width, height } = img;
+        if (width > MAX || height > MAX) {
+          const r = Math.min(MAX / width, MAX / height);
+          width = Math.round(width * r); height = Math.round(height * r);
+        }
+        const c = document.createElement('canvas');
+        c.width = width; c.height = height;
+        c.getContext('2d').drawImage(img, 0, 0, width, height);
+        c.toBlob((blob) => blob ? resolve(blob) : reject(new Error('compress failed')), 'image/jpeg', 0.85);
+      };
+      img.onerror = reject;
+      img.src = URL.createObjectURL(file);
+    });
+  }
+  function toBase64(blob) {
+    return new Promise((resolve, reject) => {
+      const r = new FileReader();
+      r.onload = () => resolve(r.result.split(',')[1]);
+      r.onerror = reject;
+      r.readAsDataURL(blob);
+    });
+  }
+
+  wFiles.addEventListener('change', async () => {
+    pending = [];
+    const rows = [];
+    let photoN = 0;
+    for (const f of Array.from(wFiles.files).slice(0, 10)) {
+      if (f.type.startsWith('image/')) {
+        const blob = await compressImage(f).catch(() => f);
+        pending.push({ name: f.name.replace(/\.[^.]+$/, '') + '.jpg', mime: 'image/jpeg', blob, isPhoto: true });
+        photoN += 1;
+        rows.push(`<span>📷 ${esc(f.name)} <button type="button" class="inspin" data-n="${photoN}">↳ 본문에 넣기 [사진${photoN}]</button></span>`);
+      } else {
+        if (f.size > 3 * 1024 * 1024) { rows.push(`<span>⚠️ ${esc(f.name)} — 3MB 초과라 웹에서는 못 올려요 (텔레그램으로 보내주세요)</span>`); continue; }
+        pending.push({ name: f.name, mime: f.type || 'application/octet-stream', blob: f, isPhoto: false });
+        rows.push(`<span>📎 ${esc(f.name)}</span>`);
+      }
+    }
+    wFileList.innerHTML = rows.join('<br>');
+  });
+
+  // [사진N] 자리표를 본문 커서 위치에 삽입
+  wFileList.addEventListener('click', (e) => {
+    const b = e.target.closest('.inspin');
+    if (!b) return;
+    const ta = document.getElementById('wBody');
+    const token = `\n[사진${b.dataset.n}]\n`;
+    const s = ta.selectionStart ?? ta.value.length;
+    const eIdx = ta.selectionEnd ?? ta.value.length;
+    ta.value = ta.value.slice(0, s) + token + ta.value.slice(eIdx);
+    ta.focus();
+    ta.selectionStart = ta.selectionEnd = s + token.length;
+  });
+
+  document.getElementById('wGo').addEventListener('click', async () => {
+    const title = document.getElementById('wTitle').value.trim();
+    if (!title) { wStatus.textContent = '제목을 입력해주세요'; return; }
+    const key = sessionStorage.getItem('beaverkey') || '';
+    const btn = document.getElementById('wGo');
+    btn.disabled = true;
+    wStatus.textContent = pending.length ? '첨부 올리는 중…' : '발행 중…';
+    try {
+      const files = [];
+      for (const p of pending) files.push({ name: p.name, mime: p.mime, data: await toBase64(p.blob) });
+      const r = await fetch('/api/write', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          key, title,
+          body: document.getElementById('wBody').value,
+          category: wCat.value,
+          isPrivate: wPriv.checked,
+          files,
+        }),
+      });
+      const data = await r.json();
+      if (!r.ok || !data.ok) throw new Error(data.error || 'fail');
+      wStatus.textContent = '';
+      document.getElementById('wTitle').value = '';
+      document.getElementById('wBody').value = '';
+      wFiles.value = ''; pending = []; wFileList.textContent = '';
+      editor.classList.remove('show');
+      load();
+    } catch (e) {
+      wStatus.textContent = e.message === 'wrong key' ? '비밀번호가 틀렸어요' : '발행 실패 — 잠시 후 다시 시도해주세요';
+      if (e.message === 'wrong key') sessionStorage.removeItem('beaverkey');
+    } finally {
+      btn.disabled = false;
+    }
+  });
+
   load();
+
+  // ── 방문자 카운트: 한 브라우저당 하루 1회만 집계 ──
+  (async () => {
+    try {
+      const kstDay = new Intl.DateTimeFormat('sv-SE', { timeZone: 'Asia/Seoul' }).format(new Date());
+      const counted = localStorage.getItem('beavervisit') === kstDay;
+      const r = await fetch('/api/visit', { method: counted ? 'GET' : 'POST' });
+      const d = await r.json();
+      if (typeof d.total === 'number') {
+        if (!counted) localStorage.setItem('beavervisit', kstDay);
+        document.getElementById('vToday').textContent = d.today.toLocaleString();
+        document.getElementById('vTotal').textContent = d.total.toLocaleString();
+        document.getElementById('visits').hidden = false;
+      }
+    } catch {}
+  })();
+
+  // ── 좋아요 / 댓글 / 공유 (이벤트 위임) ──
+  list.addEventListener('click', async (e) => {
+    const like = e.target.closest('.likebtn');
+    if (like) {
+      const id = parseInt(like.dataset.id, 10);
+      const action = liked.has(id) ? 'unlike' : 'like';
+      try {
+        const r = await fetch('/api/react', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ post_id: id, action }),
+        });
+        const data = await r.json();
+        if (data.ok) {
+          if (action === 'like') liked.add(id); else liked.delete(id);
+          localStorage.setItem('beaverlikes', JSON.stringify([...liked]));
+          like.classList.toggle('liked', action === 'like');
+          like.innerHTML = `${action === 'like' ? '❤️' : '🤍'} <span class="likeN">${data.likes}</span>`;
+        }
+      } catch {}
+      return;
+    }
+
+    const cbtn = e.target.closest('.cmtbtn');
+    if (cbtn) {
+      document.getElementById('cmts-' + cbtn.dataset.id)?.classList.toggle('show');
+      return;
+    }
+
+    const share = e.target.closest('.sharebtn');
+    if (share) {
+      const url = location.origin + location.pathname + '?post=' + share.dataset.id;
+      if (share.dataset.private === '1' && !confirm('비공개 글입니다. 링크를 받아도 비밀번호 없이는 내용이 보이지 않습니다. 계속할까요?')) return;
+      try {
+        if (navigator.share) {
+          await navigator.share({ title: '비버의 저장소 🦫', url });
+        } else {
+          await navigator.clipboard.writeText(url);
+          const old = share.innerHTML;
+          share.innerHTML = '✅ 복사됨';
+          setTimeout(() => { share.innerHTML = old; }, 1500);
+        }
+      } catch {}
+      return;
+    }
+
+    const del = e.target.closest('.cmt .del');
+    if (del) {
+      if (!confirm('이 댓글을 삭제할까요?')) return;
+      const key = sessionStorage.getItem('beaverkey') || '';
+      try {
+        const r = await fetch('/api/comment', {
+          method: 'DELETE',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ comment_id: del.dataset.cid, key }),
+        });
+        if ((await r.json()).ok) load();
+      } catch {}
+      return;
+    }
+
+    const cgo = e.target.closest('.cgo');
+    if (cgo) {
+      const box = cgo.closest('.cmtform');
+      const bodyEl = box.querySelector('.cbody');
+      const text = bodyEl.value.trim();
+      if (!text) { bodyEl.focus(); return; }
+      cgo.disabled = true;
+      try {
+        const r = await fetch('/api/comment', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            post_id: cgo.dataset.id,
+            nickname: box.querySelector('.cnick').value,
+            body: text,
+          }),
+        });
+        if ((await r.json()).ok) {
+          const openId = cgo.dataset.id;
+          await load();
+          document.getElementById('cmts-' + openId)?.classList.add('show');
+        }
+      } catch {} finally { cgo.disabled = false; }
+    }
+  });
 </script>
 </body>
 </html>

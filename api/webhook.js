@@ -13,17 +13,18 @@ async function reply(chatId, text) {
 }
 
 // 첫 줄 태그 해석: #스터디(공개) / #일기(비공개) / #콜(비공개) / 태그 없으면 일기
-// #스터디 #비공개 함께 쓰면 스터디도 비공개로 저장
 function parseTags(rawText) {
-  let lines = rawText.split('\n');
+  let lines = (rawText || '').split('\n');
   let category = null;
   let forcePrivate = false;
+  let hadTagLine = false;
 
   const first = (lines[0] || '').trim();
   const tokens = first.split(/\s+/).filter(Boolean);
   const isTagLine = tokens.length > 0 && tokens.every((t) => t.startsWith('#'));
 
   if (isTagLine) {
+    hadTagLine = true;
     for (const t of tokens) {
       const tag = t.toLowerCase();
       if (tag === '#스터디' || tag === '#study') category = '스터디';
@@ -35,15 +36,32 @@ function parseTags(rawText) {
   }
 
   if (!category) category = '일기';
-  // 스터디만 기본 공개, 나머지는 기본 비공개
-  const isPrivate = category === '스터디' ? forcePrivate : true;
+  // 콜만 기본 비공개, 스터디·일기는 기본 공개 (#비공개 태그로 개별 잠금 가능)
+  const isPrivate = category === '콜' ? true : forcePrivate;
 
-  // 남은 내용에서 첫 비어있지 않은 줄 = 제목, 나머지 = 본문
   while (lines.length && !lines[0].trim()) lines = lines.slice(1);
-  const title = (lines[0] || '').trim() || '(제목 없음)';
+  const title = (lines[0] || '').trim();
   const body = lines.slice(1).join('\n').trim();
 
-  return { category, isPrivate, title, body };
+  return { category, isPrivate, title, body, hadTagLine };
+}
+
+// 메시지에서 첨부 추출 (사진은 가장 큰 해상도 하나만)
+function extractAttachment(msg) {
+  if (msg.photo && msg.photo.length) {
+    const best = msg.photo[msg.photo.length - 1];
+    return { type: 'photo', file_id: best.file_id };
+  }
+  if (msg.document) {
+    return {
+      type: 'document',
+      file_id: msg.document.file_id,
+      file_name: msg.document.file_name || '파일',
+      mime: msg.document.mime_type || '',
+      size: msg.document.file_size || 0,
+    };
+  }
+  return null;
 }
 
 export default async function handler(req, res) {
@@ -57,16 +75,15 @@ export default async function handler(req, res) {
   const msg = update.message || update.edited_message;
   const isEdit = Boolean(update.edited_message);
 
-  // 1:1 대화만 처리 (채널·그룹 무시)
   if (!msg || !msg.chat || msg.chat.type !== 'private') {
     return res.status(200).send('ok');
   }
 
   const chatId = msg.chat.id;
   const text = msg.text || msg.caption || '';
+  const attachment = extractAttachment(msg);
 
   try {
-    // 본인 계정 잠금: OWNER_CHAT_ID 미설정 시 chat_id만 안내하고 저장하지 않음
     const owner = (process.env.OWNER_CHAT_ID || '').trim();
     if (!owner) {
       await reply(
@@ -75,31 +92,66 @@ export default async function handler(req, res) {
       );
       return res.status(200).send('ok');
     }
-    if (String(chatId) !== owner) {
-      // 주인이 아니면 조용히 무시
-      return res.status(200).send('ok');
-    }
-
-    if (!text.trim()) {
-      await reply(chatId, '🦫 텍스트만 저장할 수 있어요. 글로 보내주세요.');
-      return res.status(200).send('ok');
-    }
+    if (String(chatId) !== owner) return res.status(200).send('ok');
 
     if (text.trim() === '/start') {
       await reply(
         chatId,
-        `🦫 비버의 저장소입니다.\n\n그냥 글을 보내면 저장됩니다.\n첫 줄에 태그를 쓰면 분류돼요:\n\n#스터디 → 공개\n#일기 → 비공개 (태그 없어도 일기)\n#콜 → 비공개\n#스터디 #비공개 → 스터디지만 비공개\n\n태그 다음 줄이 제목, 그 아래가 본문입니다.\n보낸 글을 수정하면 사이트에도 반영됩니다.`
+        `🦫 비버의 저장소입니다.\n\n글·사진·파일을 보내면 저장됩니다.\n첫 줄 태그로 분류:\n\n#스터디 → 공개\n#일기 → 공개 (태그 없어도 일기)\n#콜 → 비공개\n#일기 #비공개 → 일기지만 비공개\n\n태그 다음 줄이 제목, 그 아래가 본문.\n사진 여러 장을 한 번에 보내면(앨범) 한 글로 묶입니다.\n보낸 글을 수정하면 사이트에도 반영됩니다.`
       );
       return res.status(200).send('ok');
     }
 
-    const { category, isPrivate, title, body } = parseTags(text);
+    if (!text.trim() && !attachment) {
+      await reply(chatId, '🦫 글, 사진, 파일만 저장할 수 있어요.');
+      return res.status(200).send('ok');
+    }
+
+    const { category, isPrivate, title, body, hadTagLine } = parseTags(text);
+    const attJson = JSON.stringify(attachment ? [attachment] : []);
+
+    // ── 앨범(사진 여러 장): media_group_id 로 한 글에 묶기 ──
+    if (msg.media_group_id) {
+      const groupKey = `grp:${chatId}:${msg.media_group_id}`;
+      const existing = await sql`SELECT id, title, body FROM journal_posts WHERE tg_msg_id = ${groupKey}`;
+
+      if (existing.length) {
+        // 이미 만들어진 앨범 글에 사진만 추가. 캡션이 이 조각에 붙어 왔으면 제목/본문/분류도 채움
+        const hasCaption = Boolean(text.trim());
+        const needTitle = hasCaption && (!existing[0].title || existing[0].title === '(제목 없음)');
+        if (needTitle) {
+          await sql`
+            UPDATE journal_posts
+            SET attachments = attachments || ${attJson}::jsonb,
+                title = ${title || '(제목 없음)'}, body = ${body},
+                category = ${hadTagLine ? category : '일기'},
+                is_private = ${hadTagLine ? isPrivate : false},
+                updated_at = now()
+            WHERE tg_msg_id = ${groupKey}`;
+        } else {
+          await sql`
+            UPDATE journal_posts
+            SET attachments = attachments || ${attJson}::jsonb, updated_at = now()
+            WHERE tg_msg_id = ${groupKey}`;
+        }
+      } else {
+        await sql`
+          INSERT INTO journal_posts (tg_msg_id, title, body, category, is_private, attachments, posted_at)
+          VALUES (${groupKey}, ${title || '(제목 없음)'}, ${body}, ${category}, ${isPrivate}, ${attJson}::jsonb, to_timestamp(${msg.date}))
+          ON CONFLICT (tg_msg_id) DO UPDATE
+          SET attachments = journal_posts.attachments || EXCLUDED.attachments, updated_at = now()`;
+        await reply(chatId, `🦫 앨범 저장 중 · ${category} · ${isPrivate ? '비공개 🔒' : '공개'}\n(사진이 차례로 추가됩니다)`);
+      }
+      return res.status(200).send('ok');
+    }
+
+    // ── 단일 메시지 ──
     const tgMsgId = `${chatId}:${msg.message_id}`;
 
     if (isEdit) {
       const rows = await sql`
         UPDATE journal_posts
-        SET title = ${title}, body = ${body}, category = ${category},
+        SET title = ${title || '(제목 없음)'}, body = ${body}, category = ${category},
             is_private = ${isPrivate}, updated_at = now()
         WHERE tg_msg_id = ${tgMsgId}
         RETURNING id`;
@@ -110,14 +162,15 @@ export default async function handler(req, res) {
     }
 
     await sql`
-      INSERT INTO journal_posts (tg_msg_id, title, body, category, is_private, posted_at)
-      VALUES (${tgMsgId}, ${title}, ${body}, ${category}, ${isPrivate}, to_timestamp(${msg.date}))
+      INSERT INTO journal_posts (tg_msg_id, title, body, category, is_private, attachments, posted_at)
+      VALUES (${tgMsgId}, ${title || '(제목 없음)'}, ${body}, ${category}, ${isPrivate}, ${attJson}::jsonb, to_timestamp(${msg.date}))
       ON CONFLICT (tg_msg_id) DO UPDATE
       SET title = EXCLUDED.title, body = EXCLUDED.body,
           category = EXCLUDED.category, is_private = EXCLUDED.is_private,
           updated_at = now()`;
 
-    await reply(chatId, `🦫 저장 완료 · ${category} · ${isPrivate ? '비공개 🔒' : '공개'}`);
+    const attNote = attachment ? (attachment.type === 'photo' ? ' · 📷' : ` · 📎${attachment.file_name}`) : '';
+    await reply(chatId, `🦫 저장 완료 · ${category} · ${isPrivate ? '비공개 🔒' : '공개'}${attNote}`);
     return res.status(200).send('ok');
   } catch (e) {
     console.error(e);

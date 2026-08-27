@@ -10,10 +10,23 @@ export default async function handler(req, res) {
 
   try {
     const rows = await sql`
-      SELECT id, title, body, category, is_private, posted_at, updated_at
+      SELECT id, title, body, category, is_private, attachments, likes, posted_at, updated_at
       FROM journal_posts
       ORDER BY posted_at DESC
       LIMIT 300`;
+
+    const ids = rows.map((r) => r.id);
+    let commentMap = {};
+    if (ids.length) {
+      const cs = await sql`
+        SELECT id, post_id, nickname, body, created_at
+        FROM journal_comments
+        WHERE post_id = ANY(${ids})
+        ORDER BY created_at ASC`;
+      for (const c of cs) {
+        (commentMap[c.post_id] = commentMap[c.post_id] || []).push(c);
+      }
+    }
 
     const posts = rows.map((r) => {
       if (r.is_private && !unlocked) {
@@ -32,6 +45,9 @@ export default async function handler(req, res) {
         category: r.category,
         is_private: r.is_private,
         locked: false,
+        attachments: r.attachments || [],
+        likes: r.likes || 0,
+        comments: commentMap[r.id] || [],
         posted_at: r.posted_at,
         updated_at: r.updated_at,
       };
