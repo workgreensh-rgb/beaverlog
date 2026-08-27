@@ -28,7 +28,7 @@
     line-height: 1.65;
     min-height: 100vh;
   }
-  .wrap { max-width: 680px; margin: 0 auto; padding: 40px 20px 80px; }
+  .wrap { max-width: 960px; margin: 0 auto; padding: 40px 20px 80px; }
 
   /* ── 헤더 ── */
   header { margin-bottom: 34px; }
@@ -271,7 +271,6 @@
     <button data-f="스터디" type="button">스터디</button>
     <button data-f="일기" type="button">일기</button>
     <button data-f="콜" type="button">콜</button>
-    <button data-f="방명록" type="button">📖 방명록</button>
     <button data-f="방명록" type="button">📖 방명록</button>
   </nav>
 
@@ -537,11 +536,42 @@
       load();
     }
     editor.classList.toggle('show');
-    if (editor.classList.contains('show')) document.getElementById('wTitle').focus();
+    if (editor.classList.contains('show')) { restoreDraft(); document.getElementById('wTitle').focus(); }
   });
   document.getElementById('wCancel').addEventListener('click', () => editor.classList.remove('show'));
 
-  wCat.addEventListener('change', () => { wPriv.checked = wCat.value === '콜'; });
+  wCat.addEventListener('change', () => { wPriv.checked = wCat.value === '콜'; queueDraft(); });
+
+  // ── 임시저장 (자동) ──
+  const DRAFT_KEY = 'beaverdraft';
+  const wTitleEl = document.getElementById('wTitle');
+  const wBodyEl = document.getElementById('wBody');
+  let draftTimer = null;
+  function saveDraft() {
+    localStorage.setItem(DRAFT_KEY, JSON.stringify({
+      t: wTitleEl.value, b: wBodyEl.value, c: wCat.value, p: wPriv.checked, at: Date.now(),
+    }));
+    wStatus.textContent = '💾 임시저장됨';
+  }
+  function queueDraft() {
+    clearTimeout(draftTimer);
+    draftTimer = setTimeout(saveDraft, 700);
+  }
+  wTitleEl.addEventListener('input', queueDraft);
+  wBodyEl.addEventListener('input', queueDraft);
+  wPriv.addEventListener('change', queueDraft);
+  function restoreDraft() {
+    try {
+      const d = JSON.parse(localStorage.getItem(DRAFT_KEY) || 'null');
+      if (!d || (!d.t && !d.b)) return;
+      if (wTitleEl.value.trim() || wBodyEl.value.trim()) return;
+      wTitleEl.value = d.t || '';
+      wBodyEl.value = d.b || '';
+      if (d.c) wCat.value = d.c;
+      wPriv.checked = Boolean(d.p);
+      wStatus.textContent = '💾 임시저장 글을 불러왔어요 (사진은 다시 첨부해주세요)';
+    } catch {}
+  }
 
   document.getElementById('backupBtn').addEventListener('click', () => {
     let key = sessionStorage.getItem('beaverkey') || '';
@@ -582,27 +612,41 @@
     });
   }
 
+  function rebuildFileList() {
+    let n = 0;
+    const rows = pending.map((p, i) => {
+      if (p.isPhoto) {
+        n += 1;
+        return `<span>📷 ${esc(p.origName)} <button type="button" class="inspin" data-n="${n}">↳ 본문에 넣기 [사진${n}]</button> <button type="button" class="rmatt" data-i="${i}">✕</button></span>`;
+      }
+      return `<span>📎 ${esc(p.origName)} <button type="button" class="rmatt" data-i="${i}">✕</button></span>`;
+    });
+    wFileList.innerHTML = rows.join('<br>');
+  }
+
   wFiles.addEventListener('change', async () => {
-    pending = [];
-    const rows = [];
-    let photoN = 0;
-    for (const f of Array.from(wFiles.files).slice(0, 10)) {
+    const picked = Array.from(wFiles.files);
+    wFiles.value = '';
+    for (const f of picked) {
+      if (pending.length >= 10) { wStatus.textContent = '첨부는 최대 10개까지입니다'; break; }
       if (f.type.startsWith('image/')) {
         const blob = await compressImage(f).catch(() => f);
-        pending.push({ name: f.name.replace(/\.[^.]+$/, '') + '.jpg', mime: 'image/jpeg', blob, isPhoto: true });
-        photoN += 1;
-        rows.push(`<span>📷 ${esc(f.name)} <button type="button" class="inspin" data-n="${photoN}">↳ 본문에 넣기 [사진${photoN}]</button></span>`);
+        pending.push({ name: f.name.replace(/\.[^.]+$/, '') + '.jpg', origName: f.name, mime: 'image/jpeg', blob, isPhoto: true });
       } else {
-        if (f.size > 3 * 1024 * 1024) { rows.push(`<span>⚠️ ${esc(f.name)} — 3MB 초과라 웹에서는 못 올려요 (텔레그램으로 보내주세요)</span>`); continue; }
-        pending.push({ name: f.name, mime: f.type || 'application/octet-stream', blob: f, isPhoto: false });
-        rows.push(`<span>📎 ${esc(f.name)}</span>`);
+        if (f.size > 3 * 1024 * 1024) { wStatus.textContent = f.name + ' — 3MB 초과라 웹에서는 못 올려요 (텔레그램으로 보내주세요)'; continue; }
+        pending.push({ name: f.name, origName: f.name, mime: f.type || 'application/octet-stream', blob: f, isPhoto: false });
       }
     }
-    wFileList.innerHTML = rows.join('<br>');
+    rebuildFileList();
   });
 
-  // [사진N] 자리표를 본문 커서 위치에 삽입
   wFileList.addEventListener('click', (e) => {
+    const rm = e.target.closest('.rmatt');
+    if (rm) {
+      pending.splice(parseInt(rm.dataset.i, 10), 1);
+      rebuildFileList();
+      return;
+    }
     const b = e.target.closest('.inspin');
     if (!b) return;
     const ta = document.getElementById('wBody');
@@ -612,6 +656,7 @@
     ta.value = ta.value.slice(0, s) + token + ta.value.slice(eIdx);
     ta.focus();
     ta.selectionStart = ta.selectionEnd = s + token.length;
+    queueDraft();
   });
 
   document.getElementById('wGo').addEventListener('click', async () => {
@@ -637,6 +682,8 @@
       });
       const data = await r.json();
       if (!r.ok || !data.ok) throw new Error(data.error || 'fail');
+      localStorage.removeItem(DRAFT_KEY);
+      clearTimeout(draftTimer);
       wStatus.textContent = '';
       document.getElementById('wTitle').value = '';
       document.getElementById('wBody').value = '';
