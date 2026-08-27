@@ -41,7 +41,12 @@
     font-size: clamp(30px, 6vw, 40px);
     font-weight: 700; letter-spacing: -0.01em; line-height: 1.25;
   }
+  h1 .homebeaver { text-decoration: none; cursor: pointer; }
+  h1 .homebeaver:hover { filter: brightness(1.2); }
+  .homebeaver { text-decoration: none; cursor: pointer; display: inline-block; transition: transform .15s; }
+  .homebeaver:hover, .homebeaver:focus-visible { transform: scale(1.12); outline: none; }
   .tagline { color: var(--paper-dim); font-size: 14px; margin-top: 8px; }
+  .sitedesc { color: var(--amber); font-size: 12.5px; margin-top: 5px; letter-spacing: 0.02em; }
   .byline { font-size: 12.5px; color: #7d6c54; margin-top: 7px; }
   .byline .role { letter-spacing: 0.14em; color: var(--river); font-size: 10.5px; margin-right: 6px; }
   .headrow { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
@@ -162,9 +167,8 @@
   /* 첨부: 사진 그리드 */
   .photos { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 8px; margin-top: 12px; }
   .photos.single { grid-template-columns: 1fr; }
-  .photos a { display: block; border-radius: 10px; overflow: hidden; border: 1px solid var(--log-edge); }
-  .photos img { width: 100%; height: 100%; object-fit: cover; display: block; aspect-ratio: 4/3; background: var(--bark); }
-  .photos.single img { aspect-ratio: auto; max-height: 480px; object-fit: contain; }
+  .photos img { width: 100%; height: 100%; object-fit: cover; display: block; aspect-ratio: 4/3; background: var(--bark); border-radius: 10px; border: 1px solid var(--log-edge); }
+  .photos.single img { aspect-ratio: auto; max-height: 260px; width: auto; max-width: 100%; margin: 0 auto; object-fit: contain; background: transparent; }
 
   /* 첨부: 파일 버튼 */
   .files { display: flex; flex-direction: column; gap: 6px; margin-top: 12px; }
@@ -222,6 +226,11 @@
   }
   .visits b { color: var(--paper); font-weight: 600; }
   .visits .sep { color: var(--log-edge); }
+  .visits .paw {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 22px; height: 22px; border-radius: 50%;
+    background: var(--paper); font-size: 12px; line-height: 1;
+  }
   .empty .mark { font-size: 34px; display: block; margin-bottom: 10px; }
 
   footer {
@@ -240,8 +249,8 @@
   <header>
     <div class="headrow">
       <div>
-        <div class="eyebrow">Beaverlog — Study · Diary · Call</div>
-        <h1>비버의 저장소 🦫</h1>
+        <div class="eyebrow">BEAVERLOG — 주식스터디 · 투자일기</div>
+        <h1><a href="/" class="homebeaver" title="전체 글 보기">🦫</a> 비버의 저장소</h1>
         <p class="tagline">거창한 계획 대신, 매일 하나씩 물어다 놓습니다.</p>
         <p class="byline"><span class="role">주인장</span>비로(BEERO)</p>
       </div>
@@ -262,6 +271,8 @@
     <button data-f="스터디" type="button">스터디</button>
     <button data-f="일기" type="button">일기</button>
     <button data-f="콜" type="button">콜</button>
+    <button data-f="방명록" type="button">📖 방명록</button>
+    <button data-f="방명록" type="button">📖 방명록</button>
   </nav>
 
   <section class="editor" id="editor">
@@ -270,7 +281,7 @@
       <input type="text" id="wTitle" placeholder="제목" maxlength="200">
     </div>
     <div class="row">
-      <textarea id="wBody" placeholder="본문 — 사진을 첨부하고 [본문에 넣기]를 누르면 커서 위치에 [사진1]이 들어가고, 그 자리에 사진이 표시됩니다. 링크는 자동으로 클릭 가능해집니다."></textarea>
+      <textarea id="wBody" placeholder="본문 — 사진 첨부 후 [본문에 넣기]를 누르면 커서 위치에 [사진1]이 들어갑니다. 크기 조절은 [사진1:소] [사진1:중] [사진1:대] 처럼 뒤에 붙이면 됩니다. 링크는 자동으로 클릭 가능해집니다."></textarea>
     </div>
     <div class="row" style="align-items:center;">
       <select id="wCat">
@@ -296,7 +307,7 @@
   <footer>Beaverlog · Written via Telegram · One log a day</footer>
 </div>
 
-<div class="visits" id="visits" hidden>🐾 오늘 <b id="vToday">0</b><span class="sep">|</span>전체 <b id="vTotal">0</b></div>
+<div class="visits" id="visits" hidden><span class="paw">🐾</span> 오늘 <b id="vToday">0</b><span class="sep">|</span>전체 <b id="vTotal">0</b></div>
 
 <script>
   let posts = [];
@@ -327,18 +338,22 @@
     return u;
   }
   // 본문을 [사진N] 자리표 기준으로 쪼개서 글-사진-글 순서로 렌더링
+  // 크기 옵션: [사진1:소]=160px [사진1]=[사진1:중]=260px [사진1:대]=400px
   function renderBodyWithInline(body, atts) {
     const photos = (atts || []).filter((a) => a.type === 'photo');
     const used = new Set();
+    const SIZE = { '소': 160, '중': 260, '대': 400 };
     let html = '';
-    const parts = (body || '').split(/(\[사진\d+\])/);
+    const parts = (body || '').split(/(\[사진\d+(?::(?:소|중|대))?\])/);
     for (const part of parts) {
-      const m = part.match(/^\[사진(\d+)\]$/);
+      if (part === undefined) continue;
+      const m = part.match(/^\[사진(\d+)(?::(소|중|대))?\]$/);
       if (m) {
         const idx = parseInt(m[1], 10) - 1;
+        const h = SIZE[m[2] || '중'];
         if (photos[idx]) {
           used.add(idx);
-          html += `<div class="photos single" style="margin:12px 0;"><a href="${fileUrl(photos[idx].file_id)}" target="_blank" rel="noopener"><img src="${fileUrl(photos[idx].file_id)}" alt="본문 사진" loading="lazy"></a></div>`;
+          html += `<div class="photos single" style="margin:12px 0;"><img src="${fileUrl(photos[idx].file_id)}" alt="본문 사진" loading="lazy" style="max-height:${h}px;"></div>`;
         }
       } else if (part.trim()) {
         html += `<div class="body" style="margin-top:6px;">${linkify(part.trim())}</div>`;
@@ -357,7 +372,7 @@
     let html = '';
     if (photos.length) {
       html += `<div class="photos${photos.length === 1 ? ' single' : ''}">` +
-        photos.map((p) => `<a href="${fileUrl(p.file_id)}" target="_blank" rel="noopener"><img src="${fileUrl(p.file_id)}" alt="첨부 사진" loading="lazy"></a>`).join('') +
+        photos.map((p) => `<img src="${fileUrl(p.file_id)}" alt="첨부 사진" loading="lazy">`).join('') +
         '</div>';
     }
     if (docs.length) {
@@ -375,7 +390,47 @@
   const liked = new Set(JSON.parse(localStorage.getItem('beaverlikes') || '[]'));
   const permalinkId = new URLSearchParams(location.search).get('post');
 
+  // ── 방명록 ──
+  let gb = null;
+  async function loadGuestbook() {
+    try {
+      const r = await fetch('/api/guestbook');
+      gb = (await r.json()).entries || [];
+    } catch { gb = []; }
+    renderGuestbook();
+  }
+  function renderGuestbook() {
+    if (filter !== '방명록') return;
+    const entries = gb.map((g) => `
+      <div class="cmt">
+        <span class="who">${esc(g.nickname)}</span><span class="when">${fmtDateTime(g.created_at)}</span>
+        ${unlocked ? `<button type="button" class="del gbdel" data-gid="${g.id}">삭제</button>` : ''}
+        <p>${esc(g.body)}</p>
+      </div>`).join('');
+    list.innerHTML = `
+      <article class="post">
+        <div class="post-meta"><span class="cat" style="color:var(--river);">📖 방명록</span></div>
+        <p class="body" style="color:var(--paper-dim);font-size:13px;">잘 보고 갑니다, 궁금한 점, 응원 한마디 — 자유롭게 남겨주세요.</p>
+        <div class="cmtform" style="margin-top:12px;">
+          <input type="text" class="gnick" placeholder="닉네임" maxlength="12" style="width:100px;">
+          <textarea class="gbody" placeholder="내용 (500자 이내)" maxlength="500"></textarea>
+          <button type="button" class="gbgo">남기기</button>
+        </div>
+        <div id="gbmsg" style="font-size:12.5px;color:var(--paper-dim);margin-top:6px;"></div>
+      </article>
+      ${entries || '<div class="empty"><span class="mark">📖</span>첫 방명록의 주인공이 되어주세요.</div>'}`;
+  }
+
   function render() {
+    if (filter === '방명록') {
+      if (gb === null) {
+        list.innerHTML = '<div class="empty"><span class="mark">📖</span>방명록 여는 중…</div>';
+        loadGuestbook();
+      } else {
+        renderGuestbook();
+      }
+      return;
+    }
     let shown = posts.filter((p) => filter === '전체' || p.category === filter);
     let back = '';
     if (permalinkId) {
@@ -671,6 +726,44 @@
           body: JSON.stringify({ comment_id: del.dataset.cid, key }),
         });
         if ((await r.json()).ok) load();
+      } catch {}
+      return;
+    }
+
+    const gbgo = e.target.closest('.gbgo');
+    if (gbgo) {
+      const nick = list.querySelector('.gnick').value.trim();
+      const text = list.querySelector('.gbody').value.trim();
+      const msg = document.getElementById('gbmsg');
+      if (!/^[가-힣a-zA-Z]{1,12}$/.test(nick)) { msg.textContent = '닉네임은 한글/영어 1~12자로 입력해주세요'; return; }
+      if (!text) { msg.textContent = '내용을 입력해주세요'; return; }
+      gbgo.disabled = true; msg.textContent = '남기는 중…';
+      try {
+        const r = await fetch('/api/guestbook', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ nickname: nick, body: text }),
+        });
+        if ((await r.json()).ok) { await loadGuestbook(); }
+        else { msg.textContent = '등록 실패 — 입력값을 확인해주세요'; }
+      } catch { msg.textContent = '등록 실패 — 잠시 후 다시 시도해주세요'; }
+      finally { gbgo.disabled = false; }
+      return;
+    }
+
+    const gbdel = e.target.closest('.gbdel');
+    if (gbdel) {
+      if (!confirm('이 방명록 글을 삭제할까요?')) return;
+      const key = sessionStorage.getItem('beaverkey') || '';
+      try {
+        const r = await fetch('/api/guestbook', {
+          method: 'DELETE',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ entry_id: gbdel.dataset.gid, pin: key }),
+        });
+        const d = await r.json();
+        if (d.ok) loadGuestbook();
+        else alert('삭제 권한이 없습니다');
       } catch {}
       return;
     }
