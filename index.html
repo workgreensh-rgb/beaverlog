@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>비버의 저장소 — Beaverlog</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🦫</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&family=IBM+Plex+Sans+KR:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bark: #201811;        /* 깊은 수피 갈색 (배경) */
+    --log: #2b2117;         /* 통나무 카드 */
+    --log-edge: #3a2d1f;    /* 카드 테두리 */
+    --paper: #efe5d3;       /* 본문 글자 */
+    --paper-dim: #a9977d;   /* 보조 글자 */
+    --river: #6fb3aa;       /* 강물 청록 (액센트) */
+    --amber: #c9975a;       /* 호박색 (스터디) */
+    --moss: #8ca86b;        /* 이끼 (콜) */
+    --radius: 14px;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: var(--bark);
+    color: var(--paper);
+    font-family: 'IBM Plex Sans KR', -apple-system, sans-serif;
+    line-height: 1.65;
+    min-height: 100vh;
+  }
+  .wrap { max-width: 680px; margin: 0 auto; padding: 40px 20px 80px; }
+
+  /* ── 헤더 ── */
+  header { margin-bottom: 34px; }
+  .eyebrow {
+    font-size: 11px; letter-spacing: 0.22em; color: var(--river);
+    text-transform: uppercase; margin-bottom: 10px; font-weight: 600;
+  }
+  h1 {
+    font-family: 'Gowun Batang', serif;
+    font-size: clamp(30px, 6vw, 40px);
+    font-weight: 700; letter-spacing: -0.01em; line-height: 1.25;
+  }
+  .tagline { color: var(--paper-dim); font-size: 14px; margin-top: 8px; }
+  .headrow { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+
+  /* 잠금 해제 */
+  .lockbox { flex-shrink: 0; margin-top: 6px; }
+  .lockbtn {
+    background: none; border: 1px solid var(--log-edge); color: var(--paper-dim);
+    border-radius: 999px; padding: 7px 14px; font-size: 12px; cursor: pointer;
+    font-family: inherit; transition: color .15s, border-color .15s;
+  }
+  .lockbtn:hover, .lockbtn:focus-visible { color: var(--river); border-color: var(--river); outline: none; }
+  .lockbtn.on { color: var(--river); border-color: var(--river); }
+  .keyform { display: none; gap: 6px; }
+  .keyform.show { display: flex; }
+  .keyform input {
+    width: 110px; background: var(--log); border: 1px solid var(--log-edge);
+    border-radius: 8px; color: var(--paper); padding: 7px 10px; font-size: 13px;
+    font-family: inherit;
+  }
+  .keyform input:focus-visible { outline: none; border-color: var(--river); }
+  .keyform button {
+    background: var(--river); border: none; color: var(--bark); font-weight: 600;
+    border-radius: 8px; padding: 7px 12px; font-size: 13px; cursor: pointer; font-family: inherit;
+  }
+
+  /* ── 필터 ── */
+  .filters { display: flex; gap: 8px; margin-bottom: 26px; flex-wrap: wrap; }
+  .filters button {
+    background: none; border: 1px solid var(--log-edge); color: var(--paper-dim);
+    border-radius: 999px; padding: 6px 16px; font-size: 13px; cursor: pointer;
+    font-family: inherit; transition: all .15s;
+  }
+  .filters button.active { background: var(--paper); color: var(--bark); border-color: var(--paper); font-weight: 600; }
+  .filters button:focus-visible { outline: 2px solid var(--river); outline-offset: 2px; }
+
+  /* ── 글 목록: 쌓인 통나무 ── */
+  .post {
+    background: var(--log); border: 1px solid var(--log-edge);
+    border-radius: var(--radius); padding: 20px 22px; margin-bottom: 14px;
+    position: relative;
+  }
+  .post-meta { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+
+  /* 시그니처: 나이테 배지 — 카테고리마다 나이테 색이 다름 */
+  .ring {
+    width: 22px; height: 22px; border-radius: 50%; flex-shrink: 0;
+    background:
+      radial-gradient(circle at 45% 45%,
+        var(--ring-c) 0 3px, var(--log) 3px 5px,
+        var(--ring-c) 5px 7px, var(--log) 7px 9px,
+        var(--ring-c) 9px 11px);
+    border: 1.5px solid var(--ring-c);
+  }
+  .post[data-cat="스터디"] { --ring-c: var(--amber); }
+  .post[data-cat="일기"]   { --ring-c: var(--river); }
+  .post[data-cat="콜"]     { --ring-c: var(--moss); }
+
+  .cat { font-size: 12px; font-weight: 600; color: var(--ring-c, var(--paper-dim)); letter-spacing: 0.04em; }
+  .date { font-size: 12px; color: var(--paper-dim); margin-left: auto; }
+  .post h2 {
+    font-family: 'Gowun Batang', serif; font-size: 19px; font-weight: 700;
+    line-height: 1.4; margin-bottom: 6px;
+  }
+  .post .body { font-size: 14.5px; color: var(--paper); white-space: pre-wrap; word-break: break-word; }
+  .post.lockedcard { opacity: 0.65; }
+  .post.lockedcard h2 { color: var(--paper-dim); font-size: 16px; }
+
+  .empty { text-align: center; color: var(--paper-dim); padding: 60px 0 40px; font-size: 14px; }
+  .empty .mark { font-size: 34px; display: block; margin-bottom: 10px; }
+
+  footer {
+    margin-top: 60px; text-align: center; font-size: 10.5px;
+    letter-spacing: 0.18em; color: var(--paper-dim); text-transform: uppercase;
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    .post { animation: drift .35s ease both; }
+    @keyframes drift { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="headrow">
+      <div>
+        <div class="eyebrow">Beaverlog — Study · Diary · Call</div>
+        <h1>비버의 저장소 🦫</h1>
+        <p class="tagline">거창한 계획 대신, 매일 하나씩 물어다 놓습니다.</p>
+      </div>
+      <div class="lockbox">
+        <button class="lockbtn" id="lockBtn" type="button">🔒 열람</button>
+        <div class="keyform" id="keyForm">
+          <input type="password" id="keyInput" placeholder="비밀번호" autocomplete="off">
+          <button type="button" id="keyGo">확인</button>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <nav class="filters" id="filters" aria-label="분류 필터">
+    <button data-f="전체" class="active" type="button">전체</button>
+    <button data-f="스터디" type="button">스터디</button>
+    <button data-f="일기" type="button">일기</button>
+    <button data-f="콜" type="button">콜</button>
+  </nav>
+
+  <main id="list">
+    <div class="empty"><span class="mark">🪵</span>불러오는 중…</div>
+  </main>
+
+  <footer>Beaverlog · Written via Telegram · One log a day</footer>
+</div>
+
+<script>
+  let posts = [];
+  let filter = '전체';
+  let unlocked = false;
+
+  const list = document.getElementById('list');
+  const lockBtn = document.getElementById('lockBtn');
+  const keyForm = document.getElementById('keyForm');
+  const keyInput = document.getElementById('keyInput');
+
+  function fmtDate(iso) {
+    const d = new Date(iso);
+    return d.getFullYear() + '.' + String(d.getMonth() + 1).padStart(2, '0') + '.' + String(d.getDate()).padStart(2, '0');
+  }
+  function esc(s) {
+    return (s || '').replace(/[&<>"']/g, (c) => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  }
+
+  function render() {
+    const shown = posts.filter((p) => filter === '전체' || p.category === filter);
+    if (!shown.length) {
+      list.innerHTML = '<div class="empty"><span class="mark">🪵</span>아직 물어다 놓은 통나무가 없습니다.</div>';
+      return;
+    }
+    list.innerHTML = shown.map((p) => {
+      if (p.locked) {
+        return `<article class="post lockedcard" data-cat="${esc(p.category)}">
+          <div class="post-meta"><span class="ring"></span><span class="cat">${esc(p.category)}</span><span class="date">${fmtDate(p.posted_at)}</span></div>
+          <h2>비공개 글 🔒</h2>
+        </article>`;
+      }
+      return `<article class="post" data-cat="${esc(p.category)}">
+        <div class="post-meta"><span class="ring"></span><span class="cat">${esc(p.category)}${p.is_private ? ' 🔒' : ''}</span><span class="date">${fmtDate(p.posted_at)}</span></div>
+        <h2>${esc(p.title)}</h2>
+        ${p.body ? `<div class="body">${esc(p.body)}</div>` : ''}
+      </article>`;
+    }).join('');
+  }
+
+  async function load() {
+    const key = sessionStorage.getItem('beaverkey') || '';
+    try {
+      const r = await fetch('/api/posts' + (key ? '?key=' + encodeURIComponent(key) : ''));
+      const data = await r.json();
+      posts = data.posts || [];
+      unlocked = Boolean(data.unlocked);
+      lockBtn.textContent = unlocked ? '🔓 열람 중' : '🔒 열람';
+      lockBtn.classList.toggle('on', unlocked);
+      if (!unlocked && key) sessionStorage.removeItem('beaverkey');
+      render();
+    } catch (e) {
+      list.innerHTML = '<div class="empty"><span class="mark">🪵</span>불러오기에 실패했습니다. 새로고침 해주세요.</div>';
+    }
+  }
+
+  lockBtn.addEventListener('click', () => {
+    if (unlocked) {
+      sessionStorage.removeItem('beaverkey');
+      load();
+      return;
+    }
+    keyForm.classList.toggle('show');
+    if (keyForm.classList.contains('show')) keyInput.focus();
+  });
+  document.getElementById('keyGo').addEventListener('click', submitKey);
+  keyInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') submitKey(); });
+  function submitKey() {
+    const v = keyInput.value.trim();
+    if (!v) return;
+    sessionStorage.setItem('beaverkey', v);
+    keyForm.classList.remove('show');
+    keyInput.value = '';
+    load();
+  }
+
+  document.getElementById('filters').addEventListener('click', (e) => {
+    const b = e.target.closest('button');
+    if (!b) return;
+    filter = b.dataset.f;
+    document.querySelectorAll('.filters button').forEach((x) => x.classList.toggle('active', x === b));
+    render();
+  });
+
+  load();
+</script>
+</body>
+</html>
