@@ -12,34 +12,31 @@ async function reply(chatId, text) {
   });
 }
 
-// 첫 줄 태그 해석: #스터디(공개) / #일기(비공개) / #콜(비공개) / 태그 없으면 일기
+// 글 전체에서 태그 탐지: #스터디(공개) / #일지(공개, #일기도 인식) / #콜(비공개) / #비공개
+// "26/8/27 #콜", "…샀음 #콜," 처럼 어디에 어떤 형태로 붙어 있어도 인식하고,
+// 태그는 지운 뒤 남는 첫 줄을 제목, 나머지를 본문으로 쓴다
 function parseTags(rawText) {
-  let lines = (rawText || '').split('\n');
+  const TAG_RE = /#(스터디|study|일지|일기|diary|콜|call|비공개|private)(?![가-힣a-zA-Z0-9])/gi;
   let category = null;
   let forcePrivate = false;
-  let hadTagLine = false;
 
-  const first = (lines[0] || '').trim();
-  const tokens = first.split(/\s+/).filter(Boolean);
-  const isTagLine = tokens.length > 0 && tokens.every((t) => t.startsWith('#'));
-
-  if (isTagLine) {
-    hadTagLine = true;
-    for (const t of tokens) {
-      const tag = t.toLowerCase();
-      if (tag === '#스터디' || tag === '#study') category = '스터디';
-      else if (tag === '#일기' || tag === '#diary') category = '일기';
-      else if (tag === '#콜' || tag === '#call') category = '콜';
-      else if (tag === '#비공개' || tag === '#private') forcePrivate = true;
-    }
-    lines = lines.slice(1);
+  const found = (rawText || '').match(TAG_RE) || [];
+  const hadTagLine = found.length > 0;
+  for (const t of found) {
+    const tag = t.toLowerCase();
+    if (tag === '#비공개' || tag === '#private') { forcePrivate = true; continue; }
+    if (category) continue; // 카테고리는 먼저 나온 태그 우선
+    if (tag === '#스터디' || tag === '#study') category = '스터디';
+    else if (tag === '#일지' || tag === '#일기' || tag === '#diary') category = '일지';
+    else if (tag === '#콜' || tag === '#call') category = '콜';
   }
 
-  if (!category) category = '일기';
-  // 콜만 기본 비공개, 스터디·일기는 기본 공개 (#비공개 태그로 개별 잠금 가능)
+  if (!category) category = '일지';
+  // 콜만 기본 비공개, 스터디·일지는 기본 공개 (#비공개 태그로 개별 잠금 가능)
   const isPrivate = category === '콜' ? true : forcePrivate;
 
-  while (lines.length && !lines[0].trim()) lines = lines.slice(1);
+  let lines = (rawText || '').replace(TAG_RE, '').split('\n').map((l) => l.trim());
+  while (lines.length && !lines[0]) lines = lines.slice(1);
   const title = (lines[0] || '').trim();
   const body = lines.slice(1).join('\n').trim();
 
@@ -97,7 +94,7 @@ export default async function handler(req, res) {
     if (text.trim() === '/start') {
       await reply(
         chatId,
-        `🦫 비버의 저장소입니다.\n\n글·사진·파일을 보내면 저장됩니다.\n첫 줄 태그로 분류:\n\n#스터디 → 공개\n#일기 → 공개 (태그 없어도 일기)\n#콜 → 비공개\n#일기 #비공개 → 일기지만 비공개\n\n태그 다음 줄이 제목, 그 아래가 본문.\n사진 여러 장을 한 번에 보내면(앨범) 한 글로 묶입니다.\n보낸 글을 수정하면 사이트에도 반영됩니다.`
+        `🦫 비버의 저장소입니다.\n\n글·사진·파일을 보내면 저장됩니다.\n첫 줄 태그로 분류:\n\n#스터디 → 공개\n#일지 → 공개 (태그 없어도 일지)\n#콜 → 비공개\n#일지 #비공개 → 일지지만 비공개\n\n태그 다음 줄이 제목, 그 아래가 본문.\n사진 여러 장을 한 번에 보내면(앨범) 한 글로 묶입니다.\n보낸 글을 수정하면 사이트에도 반영됩니다.`
       );
       return res.status(200).send('ok');
     }
@@ -124,7 +121,7 @@ export default async function handler(req, res) {
             UPDATE journal_posts
             SET attachments = attachments || ${attJson}::jsonb,
                 title = ${title || '(제목 없음)'}, body = ${body},
-                category = ${hadTagLine ? category : '일기'},
+                category = ${hadTagLine ? category : '일지'},
                 is_private = ${hadTagLine ? isPrivate : false},
                 updated_at = now()
             WHERE tg_msg_id = ${groupKey}`;

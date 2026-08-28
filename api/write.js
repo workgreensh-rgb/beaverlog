@@ -30,8 +30,6 @@ async function uploadToTelegram(owner, f) {
 }
 
 export default async function handler(req, res) {
-  if (req.method !== 'POST') return res.status(405).json({ error: 'method not allowed' });
-
   const { key, title, body, category, isPrivate, files } = req.body || {};
 
   if (!process.env.VIEW_KEY || key !== process.env.VIEW_KEY) {
@@ -40,7 +38,49 @@ export default async function handler(req, res) {
   const owner = (process.env.OWNER_CHAT_ID || '').trim();
   if (!owner) return res.status(500).json({ error: 'OWNER_CHAT_ID not set' });
 
-  const cat = ['스터디', '일기', '콜'].includes(category) ? category : '일기';
+  // ── 글 삭제 (주인장만) ──
+  if (req.method === 'DELETE') {
+    const id = parseInt((req.body || {}).post_id, 10);
+    if (!id) return res.status(400).json({ error: 'bad request' });
+    try {
+      await sql`DELETE FROM journal_posts WHERE id = ${id}`;
+      return res.status(200).json({ ok: true });
+    } catch (e) {
+      console.error(e);
+      return res.status(500).json({ error: 'delete failed' });
+    }
+  }
+
+  // ── 글 수정 (제목/본문/분류/공개 변경 + 새 첨부 추가, 주인장만) ──
+  if (req.method === 'PUT') {
+    const id = parseInt((req.body || {}).post_id, 10);
+    const t2 = (title || '').trim();
+    if (!id || !t2) return res.status(400).json({ error: 'bad request' });
+    const cat2 = ['스터디', '일지', '콜'].includes(category) ? category : '일지';
+    try {
+      const newAtts = [];
+      for (const f of (files || []).slice(0, 10)) {
+        newAtts.push(await uploadToTelegram(owner, f));
+      }
+      const rows = await sql`
+        UPDATE journal_posts
+        SET title = ${t2}, body = ${(body || '').trim()}, category = ${cat2},
+            is_private = ${Boolean(isPrivate)},
+            attachments = attachments || ${JSON.stringify(newAtts)}::jsonb,
+            updated_at = now()
+        WHERE id = ${id}
+        RETURNING id`;
+      if (!rows.length) return res.status(404).json({ error: 'not found' });
+      return res.status(200).json({ ok: true, id });
+    } catch (e) {
+      console.error(e);
+      return res.status(500).json({ error: 'update failed' });
+    }
+  }
+
+  if (req.method !== 'POST') return res.status(405).json({ error: 'method not allowed' });
+
+  const cat = ['스터디', '일지', '콜'].includes(category) ? category : '일지';
   const t = (title || '').trim();
   if (!t) return res.status(400).json({ error: 'title required' });
 

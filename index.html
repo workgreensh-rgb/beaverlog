@@ -149,7 +149,7 @@
     border: 1.5px solid var(--ring-c);
   }
   .post[data-cat="스터디"] { --ring-c: var(--amber); }
-  .post[data-cat="일기"]   { --ring-c: var(--river); }
+  .post[data-cat="일지"]   { --ring-c: var(--river); }
   .post[data-cat="콜"]     { --ring-c: var(--moss); }
 
   .cat { font-size: 12px; font-weight: 600; color: var(--ring-c, var(--paper-dim)); letter-spacing: 0.04em; }
@@ -167,7 +167,8 @@
   /* 첨부: 사진 그리드 */
   .photos { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 8px; margin-top: 12px; }
   .photos.single { grid-template-columns: 1fr; }
-  .photos img { width: 100%; height: 100%; object-fit: cover; display: block; aspect-ratio: 4/3; background: var(--bark); border-radius: 10px; border: 1px solid var(--log-edge); }
+  .photos img { width: 100%; height: 100%; object-fit: cover; display: block; aspect-ratio: 4/3; background: var(--bark); border-radius: 10px; border: 1px solid var(--log-edge); transition: transform .18s ease; cursor: zoom-in; }
+  .photos img.zoomed { transform: scale(1.5); cursor: zoom-out; position: relative; z-index: 5; }
   .photos.single img { aspect-ratio: auto; max-height: 260px; width: auto; max-width: 100%; margin: 0 auto; object-fit: contain; background: transparent; }
 
   /* 첨부: 파일 버튼 */
@@ -249,7 +250,7 @@
   <header>
     <div class="headrow">
       <div>
-        <div class="eyebrow">BEAVERLOG — 주식스터디 · 투자일기</div>
+        <div class="eyebrow">BEAVERLOG — 주식스터디 · 투자일지</div>
         <h1><a href="/" class="homebeaver" title="전체 글 보기">🦫</a> 비버의 저장소</h1>
         <p class="tagline">거창한 계획 대신, 매일 하나씩 물어다 놓습니다.</p>
         <p class="byline"><span class="role">주인장</span>비로(BEERO)</p>
@@ -269,7 +270,7 @@
   <nav class="filters" id="filters" aria-label="분류 필터">
     <button data-f="전체" class="active" type="button">전체</button>
     <button data-f="스터디" type="button">스터디</button>
-    <button data-f="일기" type="button">일기</button>
+    <button data-f="일지" type="button">일지</button>
     <button data-f="콜" type="button">콜</button>
     <button data-f="방명록" type="button">📖 방명록</button>
   </nav>
@@ -285,7 +286,7 @@
     <div class="row" style="align-items:center;">
       <select id="wCat">
         <option value="스터디">스터디</option>
-        <option value="일기" selected>일기</option>
+        <option value="일지" selected>일지</option>
         <option value="콜">콜</option>
       </select>
       <label class="chk"><input type="checkbox" id="wPriv"> 비공개 🔒</label>
@@ -461,6 +462,7 @@
           <button type="button" class="likebtn${isLiked ? ' liked' : ''}" data-id="${p.id}">${isLiked ? '❤️' : '🤍'} <span class="likeN">${p.likes || 0}</span></button>
           <button type="button" class="cmtbtn" data-id="${p.id}">💬 ${cms.length}</button>
           <button type="button" class="sharebtn" data-id="${p.id}" data-private="${p.is_private ? 1 : 0}">🔗 공유</button>
+          ${unlocked ? `<button type="button" class="editbtn" data-id="${p.id}">✏️ 수정</button><button type="button" class="delpost" data-id="${p.id}">🗑 삭제</button>` : ''}
         </div>
         <div class="cmts${permalinkId ? ' show' : ''}" id="cmts-${p.id}">
           ${cms.map((c) => `<div class="cmt"><span class="who">${esc(c.nickname)}</span><span class="when">${fmtDateTime(c.created_at)}</span>${unlocked ? `<button type="button" class="del" data-cid="${c.id}">삭제</button>` : ''}<p>${esc(c.body)}</p></div>`).join('')}
@@ -481,8 +483,10 @@
       const data = await r.json();
       posts = data.posts || [];
       unlocked = Boolean(data.unlocked);
-      lockBtn.textContent = unlocked ? '🔓 열람 중' : '🔒 열람';
+      lockBtn.textContent = unlocked ? '🚪 로그아웃' : '🔑 로그인';
       lockBtn.classList.toggle('on', unlocked);
+      document.getElementById('writeBtn').hidden = !unlocked;
+      document.getElementById('backupBtn').hidden = !unlocked;
       if (!unlocked && key) sessionStorage.removeItem('beaverkey');
       render();
     } catch (e) {
@@ -526,6 +530,19 @@
   const wCat = document.getElementById('wCat');
   const wPriv = document.getElementById('wPriv');
   let pending = [];
+  let editingId = null;
+
+  function resetEditor() {
+    editingId = null;
+    wTitleEl.value = '';
+    wBodyEl.value = '';
+    wCat.value = '일지';
+    wPriv.checked = false;
+    wFiles.value = ''; pending = []; wFileList.textContent = '';
+    wStatus.textContent = '';
+    document.getElementById('wGo').textContent = '발행';
+    document.querySelector('#editor h3').textContent = '새 통나무 🪵';
+  }
 
   document.getElementById('writeBtn').addEventListener('click', () => {
     let key = sessionStorage.getItem('beaverkey') || '';
@@ -535,10 +552,11 @@
       sessionStorage.setItem('beaverkey', key.trim());
       load();
     }
+    if (!editor.classList.contains('show') && editingId) resetEditor();
     editor.classList.toggle('show');
     if (editor.classList.contains('show')) { restoreDraft(); document.getElementById('wTitle').focus(); }
   });
-  document.getElementById('wCancel').addEventListener('click', () => editor.classList.remove('show'));
+  document.getElementById('wCancel').addEventListener('click', () => { resetEditor(); editor.classList.remove('show'); });
 
   wCat.addEventListener('change', () => { wPriv.checked = wCat.value === '콜'; queueDraft(); });
 
@@ -554,6 +572,7 @@
     wStatus.textContent = '💾 임시저장됨';
   }
   function queueDraft() {
+    if (editingId) return;
     clearTimeout(draftTimer);
     draftTimer = setTimeout(saveDraft, 700);
   }
@@ -561,6 +580,7 @@
   wBodyEl.addEventListener('input', queueDraft);
   wPriv.addEventListener('change', queueDraft);
   function restoreDraft() {
+    if (editingId) return;
     try {
       const d = JSON.parse(localStorage.getItem(DRAFT_KEY) || 'null');
       if (!d || (!d.t && !d.b)) return;
@@ -670,10 +690,11 @@
       const files = [];
       for (const p of pending) files.push({ name: p.name, mime: p.mime, data: await toBase64(p.blob) });
       const r = await fetch('/api/write', {
-        method: 'POST',
+        method: editingId ? 'PUT' : 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           key, title,
+          post_id: editingId || undefined,
           body: document.getElementById('wBody').value,
           category: wCat.value,
           isPrivate: wPriv.checked,
@@ -682,12 +703,8 @@
       });
       const data = await r.json();
       if (!r.ok || !data.ok) throw new Error(data.error || 'fail');
-      localStorage.removeItem(DRAFT_KEY);
-      clearTimeout(draftTimer);
-      wStatus.textContent = '';
-      document.getElementById('wTitle').value = '';
-      document.getElementById('wBody').value = '';
-      wFiles.value = ''; pending = []; wFileList.textContent = '';
+      if (!editingId) { localStorage.removeItem(DRAFT_KEY); clearTimeout(draftTimer); }
+      resetEditor();
       editor.classList.remove('show');
       load();
     } catch (e) {
@@ -718,6 +735,48 @@
 
   // ── 좋아요 / 댓글 / 공유 (이벤트 위임) ──
   list.addEventListener('click', async (e) => {
+    // 사진 클릭 → 1.25배 확대 토글
+    if (e.target.matches('.photos img')) {
+      e.target.classList.toggle('zoomed');
+      return;
+    }
+
+    // 글 수정 (주인장): 에디터에 불러오기
+    const eb = e.target.closest('.editbtn');
+    if (eb) {
+      const p = posts.find((x) => String(x.id) === String(eb.dataset.id));
+      if (!p) return;
+      editingId = p.id;
+      wTitleEl.value = p.title || '';
+      wBodyEl.value = p.body || '';
+      wCat.value = p.category || '일지';
+      wPriv.checked = Boolean(p.is_private);
+      wFiles.value = ''; pending = []; wFileList.textContent = '';
+      document.getElementById('wGo').textContent = '수정 저장';
+      document.querySelector('#editor h3').textContent = '통나무 다듬기 🪓';
+      wStatus.textContent = '수정 중 — 기존 사진은 유지되고, 새로 첨부하면 추가됩니다';
+      editor.classList.add('show');
+      editor.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      return;
+    }
+
+    // 글 삭제 (주인장)
+    const dp = e.target.closest('.delpost');
+    if (dp) {
+      if (!confirm('이 글을 삭제할까요? 댓글도 함께 지워지고 되돌릴 수 없습니다.')) return;
+      try {
+        const r = await fetch('/api/write', {
+          method: 'DELETE',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ key: sessionStorage.getItem('beaverkey') || '', post_id: dp.dataset.id }),
+        });
+        const d = await r.json();
+        if (d.ok) load();
+        else alert('삭제 실패 — 로그인 상태를 확인해주세요');
+      } catch {}
+      return;
+    }
+
     const like = e.target.closest('.likebtn');
     if (like) {
       const id = parseInt(like.dataset.id, 10);
