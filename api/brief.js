@@ -9,9 +9,19 @@ import { neon } from '@neondatabase/serverless';
 const sql = neon(process.env.DATABASE_URL);
 const TG = `https://api.telegram.org/bot${process.env.TG_TOKEN}`;
 
+// req.query가 비어 있어도 원본 URL에서 직접 파싱 (도구별 쿼리 처리 차이 대비)
+function readQuery(req) {
+  const q = { ...(req.query || {}) };
+  try {
+    const u = new URL(req.url || '', 'http://local');
+    for (const [k, v] of u.searchParams.entries()) if (!(k in q)) q[k] = v;
+  } catch {}
+  return q;
+}
+
 function decodeText(q) {
   if (q.t) {
-    let s = String(q.t).replace(/-/g, '+').replace(/_/g, '/');
+    let s = String(q.t).replace(/\s/g, '').replace(/-/g, '+').replace(/_/g, '/');
     while (s.length % 4) s += '=';
     return Buffer.from(s, 'base64').toString('utf8');
   }
@@ -49,16 +59,26 @@ async function sendTelegram(chatId, text) {
 
 export default async function handler(req, res) {
   res.setHeader('Cache-Control', 'no-store');
+  res.setHeader('Content-Type', 'application/json; charset=utf-8');
   if (req.method !== 'GET') return res.status(405).json({ ok: false, error: 'method not allowed' });
 
-  const q = req.query || {};
+  const q = readQuery(req);
   const key = String(q.key || '');
   if (!process.env.VIEW_KEY || key !== process.env.VIEW_KEY) {
     return res.status(401).json({ ok: false, error: 'unauthorized' });
   }
 
   const text = decodeText(q).trim();
-  if (!text) return res.status(400).json({ ok: false, error: 'empty text' });
+  if (!text) {
+    // 진단용: 무엇이 도착했는지 그대로 알려준다 (200으로 응답해 도구가 본문을 읽게 함)
+    return res.status(200).json({
+      ok: false,
+      error: 'empty text',
+      received_params: Object.keys(q),
+      t_length: q.t ? String(q.t).length : 0,
+      url_length: (req.url || '').length,
+    });
+  }
 
   const owner = (process.env.OWNER_CHAT_ID || '').trim();
   const out = { ok: true, telegram: false, saved: false, chars: text.length };
