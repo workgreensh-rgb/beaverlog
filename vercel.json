@@ -1,5 +1,6 @@
 {
   "rewrites": [
+    { "source": "/b/:key/:id/:n/:total/:t", "destination": "/api/brief?key=:key&id=:id&n=:n&total=:total&t=:t" },
     { "source": "/b/:key/:t", "destination": "/api/brief?key=:key&t=:t" }
   ]
 }
