@@ -1,0 +1,5 @@
+{
+  "rewrites": [
+    { "source": "/b/:key/:t", "destination": "/api/brief?key=:key&t=:t" }
+  ]
+}
