@@ -18,6 +18,7 @@
     --river: #6fb3aa;       /* 강물 청록 (액센트) */
     --amber: #c9975a;       /* 호박색 (스터디) */
     --moss: #8ca86b;        /* 이끼 (콜) */
+    --clay: #c97b63;        /* 진흙 (매매일지) */
     --radius: 14px;
   }
   * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -151,6 +152,7 @@
   .post[data-cat="스터디"] { --ring-c: var(--amber); }
   .post[data-cat="일지"]   { --ring-c: var(--river); }
   .post[data-cat="콜"]     { --ring-c: var(--moss); }
+  .post[data-cat="매매일지"] { --ring-c: var(--clay); }
 
   .cat { font-size: 12px; font-weight: 600; color: var(--ring-c, var(--paper-dim)); letter-spacing: 0.04em; }
   .date { font-size: 12px; color: var(--paper-dim); margin-left: auto; }
@@ -272,6 +274,7 @@
     <button data-f="스터디" type="button">스터디</button>
     <button data-f="일지" type="button">일지</button>
     <button data-f="콜" type="button">콜</button>
+    <button data-f="매매일지" type="button">매매일지</button>
     <button data-f="방명록" type="button">📖 방명록</button>
   </nav>
 
@@ -288,6 +291,7 @@
         <option value="스터디">스터디</option>
         <option value="일지" selected>일지</option>
         <option value="콜">콜</option>
+        <option value="매매일지">매매일지</option>
       </select>
       <label class="chk"><input type="checkbox" id="wPriv"> 비공개 🔒</label>
       <label class="filelabel">📷 사진·파일 첨부<input type="file" id="wFiles" multiple accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.hwp,.txt,.zip" style="display:none;"></label>
@@ -558,7 +562,7 @@
   });
   document.getElementById('wCancel').addEventListener('click', () => { resetEditor(); editor.classList.remove('show'); });
 
-  wCat.addEventListener('change', () => { wPriv.checked = wCat.value === '콜'; queueDraft(); });
+  wCat.addEventListener('change', () => { wPriv.checked = wCat.value === '콜' || wCat.value === '매매일지'; queueDraft(); });
 
   // ── 임시저장 (자동) ──
   const DRAFT_KEY = 'beaverdraft';
