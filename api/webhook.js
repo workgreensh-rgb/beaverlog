@@ -91,6 +91,28 @@ export default async function handler(req, res) {
     }
     if (String(chatId) !== owner) return res.status(200).send('ok');
 
+    // ── 체결 알림(trade.js)에 "답장"하면 그 매매일지의 사유 칸을 채움 ──
+    if (msg.reply_to_message && text.trim() && !isEdit) {
+      let link = [];
+      try {
+        link = await sql`SELECT post_key FROM trade_links WHERE bot_msg_id = ${msg.reply_to_message.message_id}`;
+      } catch { link = []; } // 아직 trade_links 테이블이 없으면 일반 저장으로 진행
+      if (link.length) {
+        const key = link[0].post_key;
+        const rows = await sql`SELECT body FROM journal_posts WHERE tg_msg_id = ${key}`;
+        if (rows.length) {
+          const reason = text.trim();
+          const old = rows[0].body || '';
+          const next = old.includes('[사유] (답장 대기)')
+            ? old.replace('[사유] (답장 대기)', `[사유] ${reason}`)
+            : old.replace(/\n---\n/, `\n[추가 메모] ${reason}\n---\n`);
+          await sql`UPDATE journal_posts SET body = ${next}, updated_at = now() WHERE tg_msg_id = ${key}`;
+          await reply(chatId, '🦫 매매일지에 사유 기록 완료 · 비공개 🔒');
+          return res.status(200).send('ok');
+        }
+      }
+    }
+
     if (text.trim() === '/start') {
       await reply(
         chatId,
