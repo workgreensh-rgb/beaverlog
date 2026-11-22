@@ -56,7 +56,8 @@ async function sendTelegram(chatId, text) {
 
 export default async function handler(req, res) {
   const { key, text, test: testFlag } = readInput(req);
-  if (!process.env.TRADE_KEY || key !== process.env.TRADE_KEY) {
+  const expected = String(process.env.TRADE_KEY || '').trim();
+  if (!expected || key.trim() !== expected) { // 앞뒤 공백·줄바꿈 무시
     return res.status(401).json({ ok: false, error: 'unauthorized' });
   }
   const raw = text.trim();
