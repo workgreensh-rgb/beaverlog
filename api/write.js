@@ -56,7 +56,7 @@ export default async function handler(req, res) {
     const id = parseInt((req.body || {}).post_id, 10);
     const t2 = (title || '').trim();
     if (!id || !t2) return res.status(400).json({ error: 'bad request' });
-    const cat2 = ['스터디', '시황', '생각', '콜', '매매일지'].includes(category) ? category : '생각';
+    const cat2 = ['스터디', '시황', '생각', 'AI', '콜', '매매일지'].includes(category) ? category : '생각';
     try {
       const newAtts = [];
       for (const f of (files || []).slice(0, 10)) {
@@ -80,7 +80,7 @@ export default async function handler(req, res) {
 
   if (req.method !== 'POST') return res.status(405).json({ error: 'method not allowed' });
 
-  const cat = ['스터디', '시황', '생각', '콜', '매매일지'].includes(category) ? category : '생각';
+  const cat = ['스터디', '시황', '생각', 'AI', '콜', '매매일지'].includes(category) ? category : '생각';
   const t = (title || '').trim();
   if (!t) return res.status(400).json({ error: 'title required' });
 
