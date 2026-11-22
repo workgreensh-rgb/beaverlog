@@ -19,6 +19,7 @@
     --amber: #c9975a;       /* 호박색 (스터디) */
     --moss: #8ca86b;        /* 이끼 (콜) */
     --clay: #c97b63;        /* 진흙 (매매일지) */
+    --sky: #8fa6c9;         /* 하늘 (시황) */
     --radius: 14px;
   }
   * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -150,7 +151,8 @@
     border: 1.5px solid var(--ring-c);
   }
   .post[data-cat="스터디"] { --ring-c: var(--amber); }
-  .post[data-cat="일지"]   { --ring-c: var(--river); }
+  .post[data-cat="생각"]   { --ring-c: var(--river); }
+  .post[data-cat="시황"]   { --ring-c: var(--sky); }
   .post[data-cat="콜"]     { --ring-c: var(--moss); }
   .post[data-cat="매매일지"] { --ring-c: var(--clay); }
 
@@ -272,9 +274,10 @@
   <nav class="filters" id="filters" aria-label="분류 필터">
     <button data-f="전체" class="active" type="button">전체</button>
     <button data-f="스터디" type="button">스터디</button>
-    <button data-f="일지" type="button">일지</button>
-    <button data-f="콜" type="button">콜</button>
+    <button data-f="시황" type="button">시황</button>
+    <button data-f="생각" type="button">생각</button>
     <button data-f="매매일지" type="button">매매일지</button>
+    <button data-f="콜" type="button">콜</button>
     <button data-f="방명록" type="button">📖 방명록</button>
   </nav>
 
@@ -289,9 +292,10 @@
     <div class="row" style="align-items:center;">
       <select id="wCat">
         <option value="스터디">스터디</option>
-        <option value="일지" selected>일지</option>
-        <option value="콜">콜</option>
+        <option value="시황">시황</option>
+        <option value="생각" selected>생각</option>
         <option value="매매일지">매매일지</option>
+        <option value="콜">콜</option>
       </select>
       <label class="chk"><input type="checkbox" id="wPriv"> 비공개 🔒</label>
       <label class="filelabel">📷 사진·파일 첨부<input type="file" id="wFiles" multiple accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.hwp,.txt,.zip" style="display:none;"></label>
@@ -540,7 +544,7 @@
     editingId = null;
     wTitleEl.value = '';
     wBodyEl.value = '';
-    wCat.value = '일지';
+    wCat.value = '생각';
     wPriv.checked = false;
     wFiles.value = ''; pending = []; wFileList.textContent = '';
     wStatus.textContent = '';
@@ -753,7 +757,7 @@
       editingId = p.id;
       wTitleEl.value = p.title || '';
       wBodyEl.value = p.body || '';
-      wCat.value = p.category || '일지';
+      wCat.value = p.category || '생각';
       wPriv.checked = Boolean(p.is_private);
       wFiles.value = ''; pending = []; wFileList.textContent = '';
       document.getElementById('wGo').textContent = '수정 저장';
