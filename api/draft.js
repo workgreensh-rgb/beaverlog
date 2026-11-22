@@ -21,6 +21,18 @@ export default async function handler(req, res) {
       last_error_message: r.last_error_message || null,
     });
   }
+  // 웹훅이 버튼(callback_query)도 받도록 설정 보강 (기존 URL·비밀 헤더 유지, 같은 결과로 여러 번 실행 가능)
+  if (req.method === 'GET' && req.query && req.query.fix === '1') {
+    const info = await tg('getWebhookInfo', {});
+    const r = info.result || {};
+    if (!r.url) return res.status(200).json({ ok: false, error: 'webhook url not set' });
+    const cur = Array.isArray(r.allowed_updates) && r.allowed_updates.length ? r.allowed_updates : ['message', 'edited_message'];
+    const want = Array.from(new Set([...cur, 'callback_query']));
+    const payload = { url: r.url, allowed_updates: want };
+    if (process.env.TG_SECRET) payload.secret_token = process.env.TG_SECRET;
+    const s = await tg('setWebhook', payload);
+    return res.status(200).json({ ok: Boolean(s.ok), allowed_updates: want, description: s.description || null });
+  }
   if (req.method !== 'POST') return res.status(405).json({ ok: false, error: 'method not allowed' });
   if (!owner || !process.env.TG_TOKEN) return res.status(500).json({ ok: false, error: 'bot not configured' });
 
