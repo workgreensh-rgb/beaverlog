@@ -5,7 +5,7 @@ import { neon } from '@neondatabase/serverless';
 // 조각:  GET /b/<VIEW_KEY>/<묶음ID>/<번호>/<총개수>/<base64url 조각>
 //        같은 묶음ID로 총개수만큼 도착하면 합쳐서 발송·저장
 // - 본문을 beaverlog_bot 명의로 OWNER_CHAT_ID에 텔레그램 DM 발송
-// - journal_posts에 category '모닝브리프'로 저장 (같은 날 재실행 시 덮어씀, 기본 비공개)
+// - journal_posts에 category '시황'으로 저장 (제목은 '모닝브리프 …') (같은 날 재실행 시 덮어씀, 기본 비공개)
 
 const sql = neon(process.env.DATABASE_URL);
 const TG = `https://api.telegram.org/bot${process.env.TG_TOKEN}`;
@@ -66,7 +66,7 @@ async function publish(text, isPrivate) {
     const tgMsgId = `brief:${seoulDate()}`;
     await sql`
       INSERT INTO journal_posts (tg_msg_id, title, body, category, is_private, attachments, posted_at)
-      VALUES (${tgMsgId}, ${title}, ${body}, ${'모닝브리프'}, ${isPrivate}, ${'[]'}::jsonb, now())
+      VALUES (${tgMsgId}, ${title}, ${body}, ${'시황'}, ${isPrivate}, ${'[]'}::jsonb, now())
       ON CONFLICT (tg_msg_id) DO UPDATE
       SET title = EXCLUDED.title, body = EXCLUDED.body,
           is_private = EXCLUDED.is_private, updated_at = now()`;

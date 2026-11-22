@@ -12,11 +12,12 @@ async function reply(chatId, text) {
   });
 }
 
-// 글 전체에서 태그 탐지: #스터디(공개) / #일지(공개, #일기도 인식) / #콜(비공개) / #비공개
+// 글 전체에서 태그 탐지: #스터디 / #시황 / #생각(#일지·#일기도 인식) / #매매(비공개) / #콜(비공개) / #비공개
+// #모닝브리프·#시장리뷰·#뉴스 는 지우지 않고 시황으로 분류
 // "26/8/27 #콜", "…샀음 #콜," 처럼 어디에 어떤 형태로 붙어 있어도 인식하고,
 // 태그는 지운 뒤 남는 첫 줄을 제목, 나머지를 본문으로 쓴다
 function parseTags(rawText) {
-  const TAG_RE = /#(스터디|study|일지|일기|diary|콜|call|비공개|private)(?![가-힣a-zA-Z0-9])/gi;
+  const TAG_RE = /#(스터디|study|시황|생각|일지|일기|diary|매매일지|매매|콜|call|비공개|private)(?![가-힣a-zA-Z0-9])/gi;
   let category = null;
   let forcePrivate = false;
 
@@ -27,13 +28,16 @@ function parseTags(rawText) {
     if (tag === '#비공개' || tag === '#private') { forcePrivate = true; continue; }
     if (category) continue; // 카테고리는 먼저 나온 태그 우선
     if (tag === '#스터디' || tag === '#study') category = '스터디';
-    else if (tag === '#일지' || tag === '#일기' || tag === '#diary') category = '일지';
+    else if (tag === '#시황') category = '시황';
+    else if (tag === '#생각' || tag === '#일지' || tag === '#일기' || tag === '#diary') category = '생각';
+    else if (tag === '#매매' || tag === '#매매일지') category = '매매일지';
     else if (tag === '#콜' || tag === '#call') category = '콜';
   }
 
-  if (!category) category = '일지';
+  if (!category && /#(모닝브리프|시장리뷰|뉴스)/.test(rawText || '')) category = '시황';
+  if (!category) category = '생각';
   // 콜만 기본 비공개, 스터디·일지는 기본 공개 (#비공개 태그로 개별 잠금 가능)
-  const isPrivate = category === '콜' ? true : forcePrivate;
+  const isPrivate = category === '콜' || category === '매매일지' ? true : forcePrivate;
 
   let lines = (rawText || '').replace(TAG_RE, '').split('\n').map((l) => l.trim());
   while (lines.length && !lines[0]) lines = lines.slice(1);
@@ -116,7 +120,7 @@ export default async function handler(req, res) {
     if (text.trim() === '/start') {
       await reply(
         chatId,
-        `🦫 비버의 저장소입니다.\n\n글·사진·파일을 보내면 저장됩니다.\n첫 줄 태그로 분류:\n\n#스터디 → 공개\n#일지 → 공개 (태그 없어도 일지)\n#콜 → 비공개\n#일지 #비공개 → 일지지만 비공개\n\n태그 다음 줄이 제목, 그 아래가 본문.\n사진 여러 장을 한 번에 보내면(앨범) 한 글로 묶입니다.\n보낸 글을 수정하면 사이트에도 반영됩니다.`
+        `🦫 비버의 저장소입니다.\n\n글·사진·파일을 보내면 저장됩니다.\n첫 줄 태그로 분류:\n\n#스터디 → 공개\n#시황 → 공개 (#모닝브리프·#시장리뷰·#뉴스 도 시황)\n#생각 → 공개 (태그 없어도 생각)\n#매매 → 매매일지 · 비공개\n#콜 → 비공개\n#생각 #비공개 → 생각이지만 비공개\n\n태그 다음 줄이 제목, 그 아래가 본문.\n사진 여러 장을 한 번에 보내면(앨범) 한 글로 묶입니다.\n보낸 글을 수정하면 사이트에도 반영됩니다.`
       );
       return res.status(200).send('ok');
     }
@@ -143,7 +147,7 @@ export default async function handler(req, res) {
             UPDATE journal_posts
             SET attachments = attachments || ${attJson}::jsonb,
                 title = ${title || '(제목 없음)'}, body = ${body},
-                category = ${hadTagLine ? category : '일지'},
+                category = ${hadTagLine ? category : '생각'},
                 is_private = ${hadTagLine ? isPrivate : false},
                 updated_at = now()
             WHERE tg_msg_id = ${groupKey}`;
