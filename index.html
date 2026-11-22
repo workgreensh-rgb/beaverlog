@@ -156,6 +156,30 @@
   .post[data-cat="콜"]     { --ring-c: var(--moss); }
   .post[data-cat="매매일지"] { --ring-c: var(--clay); }
 
+  .trade { margin-top: 4px; }
+  .trade-head { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 14px; }
+  .trade-side { font-size: 13px; font-weight: 700; padding: 4px 10px; border-radius: 8px; letter-spacing: 0.02em; }
+  .trade-side.buy { background: rgba(217,119,107,0.16); color: #e58f84; }
+  .trade-side.sell { background: rgba(111,159,216,0.16); color: #8db5e6; }
+  .trade-sym { font-size: 22px; font-weight: 700; color: var(--paper); }
+  .trade-code { font-size: 13px; color: var(--paper-dim); }
+  .trade-mock { font-size: 11px; color: var(--paper-dim); border: 1px solid var(--log-edge); border-radius: 6px; padding: 2px 7px; }
+  .trade-stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin-bottom: 12px; }
+  .trade-stat { background: rgba(255,255,255,0.03); border: 1px solid var(--log-edge); border-radius: 10px; padding: 10px 12px; }
+  .trade-stat .k { font-size: 11px; color: var(--paper-dim); margin-bottom: 4px; }
+  .trade-stat .v { font-size: 16px; font-weight: 600; color: var(--paper); font-variant-numeric: tabular-nums; }
+  .trade-link { font-size: 14px; padding: 10px 12px; border-radius: 10px; margin-bottom: 12px; background: rgba(255,255,255,0.03); border: 1px solid var(--log-edge); color: var(--paper); }
+  .trade-link .up { color: #e58f84; font-weight: 700; } .trade-link .down { color: #8db5e6; font-weight: 700; }
+  .trade-reason { border-left: 3px solid var(--clay); padding: 8px 0 8px 14px; margin-bottom: 10px; }
+  .trade-reason .k { font-size: 11px; color: var(--clay); font-weight: 600; margin-bottom: 4px; letter-spacing: 0.04em; }
+  .trade-reason .v { font-size: 15px; line-height: 1.7; color: var(--paper); white-space: pre-wrap; }
+  .trade-reason.is-empty .v { color: var(--paper-dim); font-size: 14px; }
+  .trade-reason.prev { border-left-color: var(--log-edge); } .trade-reason.prev .k { color: var(--paper-dim); }
+  .trade-foot { display: flex; justify-content: space-between; align-items: center; gap: 10px; font-size: 12px; color: var(--paper-dim); }
+  .trade-raw summary { cursor: pointer; list-style: none; } .trade-raw summary::-webkit-details-marker { display: none; }
+  .trade-raw pre { margin-top: 8px; white-space: pre-wrap; font-family: inherit; font-size: 13px; color: var(--paper-dim); background: rgba(0,0,0,0.2); border-radius: 8px; padding: 10px 12px; }
+  @media (max-width: 520px) { .trade-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+
   .cat { font-size: 12px; font-weight: 600; color: var(--ring-c, var(--paper-dim)); letter-spacing: 0.04em; }
   .date { font-size: 12px; color: var(--paper-dim); margin-left: auto; }
   .post h2 {
@@ -347,6 +371,45 @@
   }
   // 본문을 [사진N] 자리표 기준으로 쪼개서 글-사진-글 순서로 렌더링
   // 크기 옵션: [사진1:소]=160px [사진1]=[사진1:중]=260px [사진1:대]=400px
+  function renderTrade(p) {
+    const body = String(p.body || '');
+    const m = body.match(/^\[체결\] (매수|매도) · (.+?) · ([\d,]+)주 · ([^·\n]+?)(?: · 금액 ([^\n]+))?$/m);
+    if (!m) return null;
+    const side = m[1], symRaw = m[2].trim(), qty = m[3], px = m[4].trim(), amt = m[5] ? m[5].trim() : null;
+    const cm = symRaw.match(/^(.*?)\s*\((\d{6})\)$/);
+    const sym = cm ? cm[1] : symRaw, code = cm ? cm[2] : '';
+    const get = (tag) => { const r = body.match(new RegExp('^\\[' + tag + '\\]\\s*([\\s\\S]*?)(?=\\n\\[|\\n---|$)', 'm')); return r ? r[1].trim() : ''; };
+    const when = get('기록시각'), reason = get('사유'), memo = get('추가 메모'), link = get('매도 연결'), prev = get('직전 매수 사유');
+    const raw = (body.split(/\n---\n/)[1] || '').replace(/^\[원문\]\s*/, '');
+    const mock = /\[구분\] 모의/.test(body) || /^\[모의\]/.test(p.title || '');
+    const n = (s) => Number(String(s).replace(/[^\d.]/g, ''));
+    const isUsd = /^\$/.test(px);
+    const amount = amt || (n(qty) && n(px) ? (isUsd ? '$' + (n(qty) * n(px)).toFixed(2) : (n(qty) * n(px)).toLocaleString('ko-KR') + '원') : '-');
+    let linkHtml = '';
+    if (link) {
+      const rm = link.match(/수익률 ([+-]?[\d.]+)%/);
+      const cls = rm && Number(rm[1]) < 0 ? 'down' : 'up';
+      linkHtml = '<div class="trade-link">' + esc(link).replace(/수익률 ([+-]?[\d.]+%)/, '수익률 <span class="' + cls + '">$1</span>') + '</div>';
+    }
+    const waiting = !reason || reason.includes('답장 대기');
+    return '<div class="trade">' +
+      '<div class="trade-head"><span class="trade-side ' + (side === '매수' ? 'buy' : 'sell') + '">' + side + '</span>' +
+        '<span class="trade-sym">' + esc(sym) + '</span>' + (code ? '<span class="trade-code">' + code + '</span>' : '') +
+        (mock ? '<span class="trade-mock">모의</span>' : '') + '</div>' +
+      '<div class="trade-stats">' +
+        '<div class="trade-stat"><div class="k">수량</div><div class="v">' + esc(qty) + '주</div></div>' +
+        '<div class="trade-stat"><div class="k">체결가</div><div class="v">' + esc(px) + '</div></div>' +
+        '<div class="trade-stat"><div class="k">금액</div><div class="v">' + esc(amount) + '</div></div>' +
+      '</div>' + linkHtml +
+      (prev ? '<div class="trade-reason prev"><div class="k">직전 매수 사유</div><div class="v">' + esc(prev) + '</div></div>' : '') +
+      '<div class="trade-reason' + (waiting ? ' is-empty' : '') + '"><div class="k">' + side + ' 사유</div><div class="v">' +
+        (waiting ? '아직 사유가 없습니다 · 텔레그램 알림에 답장하면 채워집니다' : esc(reason)) + '</div></div>' +
+      (memo ? '<div class="trade-reason prev"><div class="k">추가 메모</div><div class="v">' + esc(memo) + '</div></div>' : '') +
+      '<div class="trade-foot"><span>' + esc(when) + '</span>' +
+        (raw ? '<details class="trade-raw"><summary>원문 문자 보기 ▾</summary><pre>' + esc(raw) + '</pre></details>' : '<span></span>') +
+      '</div></div>';
+  }
+
   function renderBodyWithInline(body, atts) {
     const photos = (atts || []).filter((a) => a.type === 'photo');
     const used = new Set();
@@ -464,8 +527,8 @@
       const isLiked = liked.has(p.id);
       return `<article class="post" data-cat="${esc(p.category)}" data-id="${p.id}">
         <div class="post-meta"><span class="ring"></span><span class="cat">${esc(p.category)}${p.is_private ? ' 🔒' : ''}</span><span class="date">${fmtDate(p.posted_at)}</span></div>
-        <h2>${esc(p.title)}</h2>
-        ${renderBodyWithInline(p.body, p.attachments)}
+        ${(() => { const tr = p.category === '매매일지' ? renderTrade(p) : null; return tr || `<h2>${esc(p.title)}</h2>
+        ${renderBodyWithInline(p.body, p.attachments)}`; })()}
         <div class="actbar">
           <button type="button" class="likebtn${isLiked ? ' liked' : ''}" data-id="${p.id}">${isLiked ? '❤️' : '🤍'} <span class="likeN">${p.likes || 0}</span></button>
           <button type="button" class="cmtbtn" data-id="${p.id}">💬 ${cms.length}</button>
