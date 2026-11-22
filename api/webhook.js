@@ -1,4 +1,5 @@
 import { neon } from '@neondatabase/serverless';
+import { handleDraftCallback, handleDraftReply } from './_draft.js';
 
 const sql = neon(process.env.DATABASE_URL);
 const TG = `https://api.telegram.org/bot${process.env.TG_TOKEN}`;
@@ -74,6 +75,12 @@ export default async function handler(req, res) {
   }
 
   const update = req.body || {};
+
+  // ── 모닝브리프·데일리뉴스 초안의 [발행]/[폐기] 버튼 ──
+  if (update.callback_query) {
+    try { await handleDraftCallback(update, (process.env.OWNER_CHAT_ID || '').trim()); } catch (e) { console.error('draft callback', e); }
+    return res.status(200).send('ok');
+  }
   const msg = update.message || update.edited_message;
   const isEdit = Boolean(update.edited_message);
 
@@ -95,6 +102,9 @@ export default async function handler(req, res) {
       return res.status(200).send('ok');
     }
     if (String(chatId) !== owner) return res.status(200).send('ok');
+
+    // ── 초안 메시지에 "답장"하면 수정본으로 교체 ──
+    if (msg.reply_to_message && !isEdit && (await handleDraftReply(msg, owner))) return res.status(200).send('ok');
 
     // ── 체결 알림(trade.js)에 "답장"하면 그 매매일지의 사유 칸을 채움 ──
     if (msg.reply_to_message && text.trim() && !isEdit) {
