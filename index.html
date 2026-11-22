@@ -20,6 +20,7 @@
     --moss: #8ca86b;        /* 이끼 (콜) */
     --clay: #c97b63;        /* 진흙 (매매일지) */
     --sky: #8fa6c9;         /* 하늘 (시황) */
+    --violet: #a493d1;      /* 보라 (AI) */
     --radius: 14px;
   }
   * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -153,6 +154,7 @@
   .post[data-cat="스터디"] { --ring-c: var(--amber); }
   .post[data-cat="생각"]   { --ring-c: var(--river); }
   .post[data-cat="시황"]   { --ring-c: var(--sky); }
+  .post[data-cat="AI"]     { --ring-c: var(--violet); }
   .post[data-cat="콜"]     { --ring-c: var(--moss); }
   .post[data-cat="매매일지"] { --ring-c: var(--clay); }
 
@@ -301,6 +303,7 @@
     <button data-f="시황" type="button">시황</button>
     <button data-f="생각" type="button">생각</button>
     <button data-f="매매일지" type="button">매매일지</button>
+    <button data-f="AI" type="button">AI</button>
     <button data-f="콜" type="button">콜</button>
     <button data-f="방명록" type="button">📖 방명록</button>
   </nav>
@@ -319,6 +322,7 @@
         <option value="시황">시황</option>
         <option value="생각" selected>생각</option>
         <option value="매매일지">매매일지</option>
+        <option value="AI">AI</option>
         <option value="콜">콜</option>
       </select>
       <label class="chk"><input type="checkbox" id="wPriv"> 비공개 🔒</label>
