@@ -1,8 +1,11 @@
 import { neon } from '@neondatabase/serverless';
+import perfHandler from './_perfhandler.js';
 
 const sql = neon(process.env.DATABASE_URL);
 
 export default async function handler(req, res) {
+  // 공개 수익률: /api/performance → /api/posts?view=performance (Vercel Hobby 함수 12개 제한 때문에 합침)
+  if ((req.query.view || '') === 'performance') return perfHandler(req, res);
   if (req.method !== 'GET') return res.status(405).json({ error: 'method not allowed' });
 
   const key = (req.query.key || '').toString();
