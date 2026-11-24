@@ -273,6 +273,39 @@
     .post { animation: drift .35s ease both; }
     @keyframes drift { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
   }
+  /* ── 실전 기록 ── */
+  .rl-head { margin-bottom: 14px; }
+  .rl-head h2 { font-family: 'Gowun Batang', serif; font-size: 22px; margin-bottom: 4px; }
+  .rl-basis { font-size: 12px; color: var(--paper-dim); }
+  .rl-kpis { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; margin-bottom: 12px; }
+  @media (max-width: 720px) { .rl-kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+  .rl-kpi { background: var(--log); border: 1px solid var(--log-edge); border-radius: var(--radius); padding: 14px; }
+  .rl-kpi .l { font-size: 12px; color: var(--paper-dim); }
+  .rl-kpi .v { font-size: 24px; font-weight: 600; margin-top: 2px; }
+  .rl-kpi .s { font-size: 11px; color: var(--paper-dim); }
+  .rl-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 12px; margin-bottom: 12px; align-items: start; }
+  @media (max-width: 720px) { .rl-grid { grid-template-columns: 1fr; } }
+  .rl-card { background: var(--log); border: 1px solid var(--log-edge); border-radius: var(--radius); margin-bottom: 12px; }
+  .rl-grid .rl-card { margin-bottom: 0; }
+  .rl-ch { display: flex; justify-content: space-between; align-items: baseline; padding: 12px 16px; border-bottom: 1px solid var(--log-edge); }
+  .rl-ch b { font-size: 15px; } .rl-ch span { font-size: 11px; color: var(--paper-dim); }
+  .rl-bd { padding: 12px 16px; }
+  .rl-bar { display: flex; height: 12px; border-radius: 4px; overflow: hidden; margin-bottom: 10px; background: var(--bark); }
+  .rl-srow { display: grid; grid-template-columns: 12px minmax(0, 1fr) 56px 64px; gap: 8px; align-items: center; font-size: 13px; padding: 4px 0; }
+  .rl-sw { width: 10px; height: 10px; border-radius: 2px; }
+  .rl-r { text-align: right; }
+  .rl-row { display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 8px 0; border-bottom: 1px solid var(--log-edge); font-size: 13px; }
+  .rl-row:last-child { border-bottom: none; }
+  .rl-tag { font-size: 11px; color: var(--paper-dim); margin-left: 4px; }
+  .rl-up { color: #e0675a; } .rl-dn { color: #7fa3d8; } .rl-mute { color: var(--paper-dim); }
+  .rl-tr { background: var(--bark); border: 1px solid var(--log-edge); border-radius: 10px; padding: 12px; margin-bottom: 10px; }
+  .rl-tr:last-child { margin-bottom: 0; }
+  .rl-trh { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+  .rl-trh b { font-size: 15px; } .rl-trh .ret { font-size: 15px; font-weight: 600; }
+  .rl-meta { font-size: 12px; color: var(--paper-dim); margin: 2px 0 6px; }
+  .rl-why { font-size: 13px; margin-top: 2px; } .rl-why span { color: var(--paper-dim); margin-right: 6px; }
+  .rl-tl { display: block; margin: 4px 0; }
+  .rl-foot { font-size: 11px; color: var(--paper-dim); line-height: 1.7; margin-top: 6px; }
 </style>
 </head>
 <body>
@@ -303,6 +336,7 @@
     <button data-f="시황" type="button">시황</button>
     <button data-f="생각" type="button">생각</button>
     <button data-f="매매일지" type="button">매매일지</button>
+    <button data-f="실전기록" type="button">📈 실전 기록</button>
     <button data-f="AI" type="button">AI</button>
     <button data-f="콜" type="button">콜</button>
     <button data-f="방명록" type="button">📖 방명록</button>
@@ -496,7 +530,81 @@
       ${entries || '<div class="empty"><span class="mark">📖</span>첫 방명록의 주인공이 되어주세요.</div>'}`;
   }
 
+  // ── 실전 기록 (공개 수익률 · 수량·금액 비공개) ──
+  const RL_PAL = ['#c9975a', '#6fb3aa', '#c97b63', '#8fa6c9', '#a493d1', '#8ca86b', '#d6b98c', '#a9977d'];
+  const rlCls = (v) => (v == null || !isFinite(v) ? 'rl-mute' : v > 0 ? 'rl-up' : v < 0 ? 'rl-dn' : '');
+  const rlPct = (v, d = 2) => (v == null || !isFinite(v) ? '-' : (v > 0 ? '+' : '') + v.toFixed(d) + '%');
+  const rlMd = (s) => (s ? s.slice(5).replace('-', '/') : '');
+  const RL_CUR = { KRW: '원', JPY: '엔', HKD: '홍콩달러', CNY: '위안' };
+  const RL_MKT = { KR: '', US: '미국', JP: '일본', HK: '홍콩', CN: '중국' };
+  const rlMoney = (n, c) => (n == null ? '-' : c === 'USD' ? '$' + Number(n).toLocaleString('en-US', { maximumFractionDigits: 2 })
+    : Number(n).toLocaleString('ko-KR', { maximumFractionDigits: c === 'KRW' ? 0 : 2 }) + (RL_CUR[c] || '원'));
+  function rlTimeline(points, cur) {
+    if (points.length < 2) return '';
+    const W = 300, H = 52, P = 8;
+    const t = points.map((p) => new Date(p.date).getTime()), v = points.map((p) => p.price);
+    const t0 = Math.min(...t), t1 = Math.max(...t), v0 = Math.min(...v), v1 = Math.max(...v);
+    const x = (i) => P + (t1 > t0 ? (t[i] - t0) / (t1 - t0) : i / (points.length - 1)) * (W - 2 * P);
+    const y = (i) => H - P - (v1 > v0 ? (v[i] - v0) / (v1 - v0) : 0.5) * (H - 2 * P);
+    const line = points.map((_, i) => x(i).toFixed(1) + ',' + y(i).toFixed(1)).join(' ');
+    const dots = points.map((p, i) => p.type === 'buy'
+      ? `<polygon points="${x(i)},${y(i) - 6} ${x(i) - 5},${y(i) + 3} ${x(i) + 5},${y(i) + 3}" fill="#e0675a"><title>매수 ${rlMd(p.date)} ${rlMoney(p.price, cur)}</title></polygon>`
+      : `<polygon points="${x(i)},${y(i) + 6} ${x(i) - 5},${y(i) - 3} ${x(i) + 5},${y(i) - 3}" fill="#7fa3d8"><title>매도 ${rlMd(p.date)} ${rlMoney(p.price, cur)}</title></polygon>`).join('');
+    return `<svg class="rl-tl" viewBox="0 0 ${W} ${H}" width="100%" height="${H}" role="img" aria-label="매수 매도 타점"><polyline points="${line}" fill="none" stroke="#5a4733" stroke-width="1.2" stroke-dasharray="3 3"/>${dots}</svg>`;
+  }
+  let rlData = null;
+  async function renderReal() {
+    if (!rlData) {
+      list.innerHTML = '<div class="empty"><span class="mark">📈</span>실전 기록 불러오는 중…</div>';
+      try { const r = await fetch('/api/performance'); rlData = await r.json(); if (!rlData.ok) throw 0; }
+      catch { rlData = null; if (filter === '실전기록') list.innerHTML = '<div class="empty"><span class="mark">📈</span>실전 기록을 불러오지 못했습니다.</div>'; return; }
+    }
+    if (filter !== '실전기록') return;
+    const d = rlData, s = d.summary;
+    const open = d.open || [], closed = d.closed || [];
+    const evalOf = (x) => { const o = open.find((y) => (y.code || y.name) === (x.code || x.name)); return o && o.evalPct != null ? o : null; };
+    const unreal = (x) => { const o = evalOf(x); return o && x.openCostSharePct ? x.openCostSharePct * o.evalPct / 100 : 0; };
+    const stocks = (d.stocks || []).map((x) => ({ ...x, totalPct: x.weightPct ? ((x.realizedPnlSharePct || 0) + unreal(x)) / x.weightPct * 100 : null }));
+    const total = stocks.reduce((a, x) => a + (x.realizedPnlSharePct || 0) + unreal(x), 0);
+    const missing = open.filter((o) => o.evalPct == null).length;
+    const wins = Math.round((s.winRatePct || 0) * s.closedTrades / 100);
+    const secs = {};
+    stocks.forEach((x) => { const g = secs[x.sector] || (secs[x.sector] = { sector: x.sector, w: 0, pnl: 0, n: 0 }); g.w += x.weightPct || 0; g.pnl += (x.realizedPnlSharePct || 0) + unreal(x); g.n++; });
+    const secList = Object.values(secs).sort((a, b) => b.w - a.w);
+    const kpi = (l, v, sub, c) => `<div class="rl-kpi"><div class="l">${l}</div><div class="v ${c || ''}">${v}</div><div class="s">${sub}</div></div>`;
+    list.innerHTML = `
+      <div class="rl-head"><h2>실전 매매 기록</h2><div class="rl-basis">실제 계좌 체결 기준 · 세전·수수료 전 · 수량과 금액은 공개하지 않습니다</div></div>
+      <div class="rl-kpis">
+        ${kpi('실현 누적 수익률', rlPct(s.cumulativeReturnPct), '금액 가중', rlCls(s.cumulativeReturnPct))}
+        ${kpi('투입원가 대비 총손익', stocks.length ? rlPct(total) : '-', missing ? `보유 ${missing}종목 시세 미반영` : '실현 + 보유 평가', rlCls(total))}
+        ${kpi('승률', s.winRatePct == null ? '-' : Math.round(s.winRatePct) + '%', s.closedTrades ? `${wins}승 ${s.closedTrades - wins}패` : '실현 거래 없음')}
+        ${kpi('평균 보유', s.avgHoldDays == null ? '-' : Math.round(s.avgHoldDays) + '일', s.avgReturnPct == null ? '' : '거래당 평균 ' + rlPct(s.avgReturnPct))}
+      </div>
+      <div class="rl-grid">
+        <div class="rl-card"><div class="rl-ch"><b>섹터별</b><span>투입원가 기준 비중</span></div><div class="rl-bd">${secList.length
+          ? `<div class="rl-bar">${secList.map((g, i) => `<div style="width:${g.w}%;background:${RL_PAL[i % RL_PAL.length]}" title="${esc(g.sector)} ${g.w.toFixed(1)}%"></div>`).join('')}</div>` +
+            secList.map((g, i) => { const r = g.w ? g.pnl / g.w * 100 : null; return `<div class="rl-srow"><span class="rl-sw" style="background:${RL_PAL[i % RL_PAL.length]}"></span><span>${esc(g.sector)}<span class="rl-tag">${g.n}종목</span></span><span class="rl-r rl-mute">${g.w.toFixed(1)}%</span><span class="rl-r ${rlCls(r)}">${rlPct(r, 1)}</span></div>`; }).join('')
+          : '<div class="rl-mute">아직 기록이 없습니다</div>'}</div></div>
+        <div class="rl-card"><div class="rl-ch"><b>종목별</b><span>비중 · 손익률</span></div><div class="rl-bd">${stocks.length
+          ? stocks.map((x) => `<div class="rl-row"><span>${esc(x.name)}<span class="rl-tag">${esc(x.sector)}${RL_MKT[x.market] ? ' · ' + RL_MKT[x.market] : ''} · ${x.buys + x.sells}회${x.holding ? ' · 보유' : ''}</span></span><span class="rl-r"><span class="rl-mute" style="margin-right:10px">${(x.weightPct || 0).toFixed(1)}%</span><b class="${rlCls(x.totalPct)}">${rlPct(x.totalPct, 1)}</b></span></div>`).join('')
+          : '<div class="rl-mute">아직 기록이 없습니다</div>'}</div></div>
+      </div>
+      <div class="rl-card"><div class="rl-ch"><b>보유 중</b><span>${open.length ? open.length + '종목' : ''}</span></div><div class="rl-bd">${open.length ? open.map((o) => `
+        <div class="rl-tr"><div class="rl-trh"><b>${esc(o.name)}<span class="rl-tag">${esc(o.sector || '')}${RL_MKT[o.market] ? ' · ' + RL_MKT[o.market] : ''}</span></b><span class="ret ${o.evalPct != null ? rlCls(o.evalPct) : 'rl-mute'}">${o.evalPct != null ? rlPct(o.evalPct) : '시세 미지원'}<span class="rl-tag">평가</span></span></div>
+          <div class="rl-meta">${rlMd(o.buyDate)} 첫 매수 · 평균 타점 ${rlMoney(o.avgEntry, o.currency)}${o.livePrice ? ' · 현재가 ' + rlMoney(o.livePrice, o.currency) : ''}${(o.entries || []).length > 1 ? ' · 분할매수 ' + o.entries.length + '회' : ''}</div>
+          ${rlTimeline((o.entries || []).map((p) => ({ ...p, type: 'buy' })), o.currency)}
+          ${(o.reasons || []).map((r) => `<div class="rl-why"><span>매수 사유</span>${esc(r)}</div>`).join('')}</div>`).join('') : '<div class="rl-mute">보유 중인 종목이 없습니다</div>'}</div></div>
+      <div class="rl-card"><div class="rl-ch"><b>실현 거래</b><span>${closed.length ? closed.length + '건' : ''}</span></div><div class="rl-bd">${closed.length ? closed.map((c) => `
+        <div class="rl-tr"><div class="rl-trh"><b>${esc(c.name)}<span class="rl-tag">${RL_MKT[c.market] || ''}${c.partial ? ' · 일부 매도' : ''}</span></b><span class="ret ${rlCls(c.returnPct)}">${rlPct(c.returnPct)}</span></div>
+          <div class="rl-meta">${rlMd(c.buyDate)} 매수 ${rlMoney(c.avgEntry, c.currency)} → ${rlMd(c.sellDate)} 매도 ${rlMoney(c.sellPrice, c.currency)} · ${c.holdDays}일${c.currency !== 'KRW' ? ' · 현지통화 기준' : ''}</div>
+          ${rlTimeline((c.entries || []).map((p) => ({ ...p, type: 'buy' })).concat([{ date: c.sellDate, price: c.sellPrice, type: 'sell' }]), c.currency)}
+          ${(c.buyReasons || []).map((r) => `<div class="rl-why"><span>매수 사유</span>${esc(r)}</div>`).join('')}
+          ${c.sellReason ? `<div class="rl-why"><span>매도 사유</span>${esc(c.sellReason)}</div>` : ''}</div>`).join('') : '<div class="rl-mute">아직 실현한 거래가 없습니다</div>'}</div></div>
+      <div class="rl-foot">기준: ${esc(d.basis)}<br>비중은 누적 투입원가 기준이며 외화 종목은 매수일 기준환율로 환산한 추정치입니다. 섹터 분류: ATLAS.<br>보유 종목 평가는 국내·미국 시세로 계산하며, 그 외 시장은 평가에서 빠집니다. 갱신 ${new Date(d.asof).toLocaleString('ko-KR')}</div>`;
+  }
+
   function render() {
+    if (filter === '실전기록') { renderReal(); return; }
     if (filter === '방명록') {
       if (gb === null) {
         list.innerHTML = '<div class="empty"><span class="mark">📖</span>방명록 여는 중…</div>';
