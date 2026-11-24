@@ -38,7 +38,10 @@ export function parsePost(p) {
   let reason = rm ? rm[1].trim() : '';
   if (!reason || reason.includes('답장 대기')) reason = '';
 
-  return { id: p.id, side, name, code, qty, price, currency, explicitCurrency: Boolean(explicit), reason, at: new Date(p.posted_at) };
+  const sm = body.match(/^\[섹터\]\s*([^\n]+)/m); // 수동 섹터 지정 (ATLAS 분류보다 우선)
+  const sectorOverride = sm ? sm[1].trim().slice(0, 20) : null;
+
+  return { id: p.id, side, name, code, qty, price, currency, explicitCurrency: Boolean(explicit), sectorOverride, reason, at: new Date(p.posted_at) };
 }
 
 const dayKST = (d) => d.toLocaleString('sv-SE', { timeZone: 'Asia/Seoul' }).slice(0, 10);
@@ -46,13 +49,23 @@ const daysBetween = (a, b) => Math.max(0, Math.round((b - a) / 86400000));
 const r2 = (x) => (x == null ? null : Math.round(x * 100) / 100);
 
 // fx(currency, dateStr) → 1단위당 원화 (가중치 계산용). 없으면 null
-export function computePerformance(posts, fx = () => null) {
+// sectorOf(name, code) → { sector, sub } | null  (ATLAS 분류)
+export function computePerformance(posts, fx = () => null, sectorOf = () => null) {
   const events = posts.map(parsePost).filter(Boolean).sort((a, b) => a.at - b.at || a.id - b.id);
 
   const pos = new Map(); // key → { qty, avg, openedAt, name, code, currency, buys: [] }
   const closed = [];     // 매도 1건 = 1행
   const markers = [];    // 차트용 타점
   let pnlKrw = 0, costKrw = 0, fxMissing = 0;
+  const stocks = new Map(); // 종목별 누적 (금액은 내부 계산용, 응답에는 비율만)
+  const stockOf = (e) => {
+    const k = e.code || e.name;
+    let s = stocks.get(k);
+    if (!s) { s = { name: e.name, code: e.code, currency: e.currency, buys: 0, sells: 0, buyKrw: 0, soldCostKrw: 0, pnlKrw: 0, override: null }; stocks.set(k, s); }
+    if (e.sectorOverride) s.override = e.sectorOverride;
+    s.currency = e.currency;
+    return s;
+  };
 
   for (const e of events) {
     const key = e.code || e.name;
@@ -73,6 +86,7 @@ export function computePerformance(posts, fx = () => null) {
       p.avg = (p.avg * p.qty + e.price * e.qty) / (p.qty + e.qty);
       p.qty += e.qty;
       p.buys.push({ date: dayKST(e.at), price: e.price, reason: e.reason });
+      { const st = stockOf(e); st.buys++; const br = fx(e.currency, dayKST(e.at)); if (br) st.buyKrw += e.price * e.qty * br; else fxMissing++; }
       const mk = { type: 'buy', name: e.name, code: e.code, market: MARKET_BY_CUR[p.currency], currency: p.currency, date: dayKST(e.at), price: e.price };
       p.marks.push(mk); markers.push(mk);
       continue;
@@ -82,8 +96,11 @@ export function computePerformance(posts, fx = () => null) {
     const q = Math.min(e.qty, p.qty);
     const ret = e.price / p.avg - 1;
     const rate = fx(e.currency, dayKST(e.at));
-    if (rate) { pnlKrw += (e.price - p.avg) * q * rate; costKrw += p.avg * q * rate; }
-    else fxMissing++;
+    const st = stockOf(e); st.sells++;
+    if (rate) {
+      pnlKrw += (e.price - p.avg) * q * rate; costKrw += p.avg * q * rate;
+      st.pnlKrw += (e.price - p.avg) * q * rate; st.soldCostKrw += p.avg * q * rate;
+    } else fxMissing++;
     closed.push({
       name: p.name, code: p.code, market: MARKET_BY_CUR[p.currency], currency: p.currency,
       buyDate: dayKST(p.openedAt), avgEntry: r2(p.avg), entries: p.buys.map((b) => ({ date: b.date, price: b.price })),
@@ -115,11 +132,45 @@ export function computePerformance(posts, fx = () => null) {
     fxMissing,
   };
 
+  // ── 종목별·섹터별 (비중 = 누적 매입원가 기준 %, 금액은 내보내지 않음) ──
+  const totalBuy = [...stocks.values()].reduce((a, x) => a + x.buyKrw, 0);
+  const pct = (x) => (totalBuy > 0 ? r2((x / totalBuy) * 100) : null);
+  const openByKey = new Map(open.map((o) => [o.code || o.name, o]));
+  const stockRows = [];
+  const secMap = new Map();
+  for (const x of stocks.values()) {
+    const at = x.override ? { sector: x.override, sub: '' } : sectorOf(x.name, x.code) || { sector: '미분류', sub: '' };
+    const op = openByKey.get(x.code || x.name);
+    const openCost = op ? Math.max(0, x.buyKrw - x.soldCostKrw) : 0; // 보유분 원가 (근사: 매수일 환율)
+    if (op) { op.sector = at.sector; op.costSharePct = pct(openCost); }
+    stockRows.push({
+      name: x.name, code: x.code, market: MARKET_BY_CUR[x.currency], currency: x.currency,
+      sector: at.sector, sub: at.sub || '',
+      buys: x.buys, sells: x.sells, holding: Boolean(op),
+      weightPct: pct(x.buyKrw),
+      realizedReturnPct: x.soldCostKrw > 0 ? r2((x.pnlKrw / x.soldCostKrw) * 100) : null,
+      realizedPnlSharePct: pct(x.pnlKrw),  // 실현손익 ÷ 전체 매입원가
+      openCostSharePct: pct(openCost),     // 보유분 원가 ÷ 전체 매입원가 (평가손익 합산용)
+      avgEntry: op ? op.avgEntry : null,
+    });
+    const g = secMap.get(at.sector) || { sector: at.sector, stocks: 0, buyKrw: 0, soldCostKrw: 0, pnlKrw: 0, openCost: 0 };
+    g.stocks++; g.buyKrw += x.buyKrw; g.soldCostKrw += x.soldCostKrw; g.pnlKrw += x.pnlKrw; g.openCost += openCost;
+    secMap.set(at.sector, g);
+  }
+  stockRows.sort((a, b) => (b.weightPct || 0) - (a.weightPct || 0));
+  const sectors = [...secMap.values()].map((g) => ({
+    sector: g.sector, stocks: g.stocks, weightPct: pct(g.buyKrw),
+    realizedReturnPct: g.soldCostKrw > 0 ? r2((g.pnlKrw / g.soldCostKrw) * 100) : null,
+    realizedPnlSharePct: pct(g.pnlKrw), openCostSharePct: pct(g.openCost),
+  })).sort((a, b) => (b.weightPct || 0) - (a.weightPct || 0));
+
   return {
     basis: '실현 거래 기준 · 세전·수수료 전 · 이동평균 단가. 누적 수익률은 금액 가중(외화는 매도일 기준환율로 가중치만 원화 환산), 거래별 수익률은 현지통화 기준',
     summary,
     closed: closed.reverse(),
     open,
+    stocks: stockRows,
+    sectors,
     markers,
   };
 }
