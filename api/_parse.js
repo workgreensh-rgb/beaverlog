@@ -7,12 +7,12 @@ const num = (s) => (s == null ? null : Number(String(s).replace(/,/g, '')));
 const SECURITY_RE = /인증번호|인증 번호|OTP|비밀번호|보안코드|로그인|본인확인|타기기|접속\s*알림/;
 const NOT_FILL_RE = /미체결|체결\s*취소|주문\s*거부|거부|취소\s*확인|취소체결|정정\s*확인/;
 
-const NOT_TICKER = new Set(['USD', 'KRW', 'KRX', 'NYSE', 'NASDAQ', 'AMEX', 'ARCA', 'SMS', 'LMS', 'MTS', 'HTS',
+const NOT_TICKER = new Set(['USD', 'KRW', 'JPY', 'HKD', 'CNY', 'CNH', 'HK', 'TSE', 'HKEX', 'SSE', 'SZSE', 'KRX', 'NYSE', 'NASDAQ', 'AMEX', 'ARCA', 'SMS', 'LMS', 'MTS', 'HTS',
   'NXT', 'ETF', 'ETN', 'ADR', 'POP', 'WEB', 'KST', 'EST', 'AM', 'PM', 'KODEX', 'TIGER', 'ACE', 'SOL', 'RISE',
   'KOSEF', 'HANARO', 'ARIRANG', 'PLUS', 'KIWOOM', 'TIMEFOLIO', 'WON', 'OTP', 'MPOP']);
 
 // 종목명 후보에서 지울 말
-const STOP_WORDS = ['모의테스트', '모의 테스트', '[모의]', '삼성증권', '[Web발신]', 'Web발신', '국내주식', '해외주식', '주식', '매수체결', '매도체결',
+const STOP_WORDS = ['모의테스트', '모의 테스트', '[모의]', '삼성증권', '[Web발신]', 'Web발신', '국내주식', '해외주식', '해외', '주식', '매수체결', '매도체결',
   '매수', '매도', '체결안내', '체결', '안내', '통보', '알림', '고객님', '고객', '계좌', '종목명', '종목',
   '현금', '신용', '정규장', '시간외', '장전', '장후', 'NXT', 'KRX', '대체거래소', '정상', '완료', '전량', '일부', '부분'];
 
@@ -29,6 +29,15 @@ function cleanName(s) {
   return t;
 }
 
+// 통화 판별 (표시가 없으면 원화)
+export function detectCurrency(t) {
+  if (/HKD|HK\$|홍콩\s*달러|홍콩|HKEX/i.test(t)) return 'HKD';
+  if (/JPY|¥|￥|円|\d\s*엔(?![가-힣])|엔화|일본|도쿄|TSE/i.test(t)) return 'JPY';
+  if (/CNY|CNH|위안|중국\s*A|상해|상하이|심천|선전|SSE|SZSE/i.test(t)) return 'CNY';
+  if (/USD|\$|달러|미국|NASDAQ|NYSE|AMEX/i.test(t)) return 'USD';
+  return 'KRW';
+}
+
 export function parseFill(raw) {
   const t = String(raw || '').replace(/\r/g, '');
   const lines = t.split('\n').map((l) => l.trim()).filter(Boolean);
@@ -40,7 +49,9 @@ export function parseFill(raw) {
   const sm = t.match(/매수|매도|\bBUY\b|\bSELL\b/i);
   const side = sm ? (/매도|SELL/i.test(sm[0]) ? '매도' : '매수') : null;
 
-  const isUS = /USD|\$|달러|NASDAQ|NYSE|AMEX/i.test(t);
+  // 통화: 문자에 적힌 표시로만 판단. 홍콩달러는 '달러'를 포함하므로 USD보다 먼저 본다.
+  const currency = detectCurrency(t);
+  const isUS = currency === 'USD';
 
   // 수량
   const qtyM = t.match(/(?:체결)?수량\s*[:：]?\s*([\d,]+)/) || t.match(/([\d,]+)\s*주(?![가-힣])/);
@@ -49,8 +60,9 @@ export function parseFill(raw) {
   // 체결가: 라벨 우선 → $ → "N주 X원" → "@X"
   const priceM =
     t.match(/(?:체결가|체결단가|단가|평균가|가격)\s*[:：]?\s*\$?\s*([\d,]+(?:\.\d+)?)/) ||
-    t.match(/\$\s*([\d,]+(?:\.\d+)?)/) ||
-    t.match(/([\d,]+\.\d+)\s*(?:USD|달러)/i) ||
+    t.match(/(?:HK\$|\$|¥|￥)\s*([\d,]+(?:\.\d+)?)/) ||
+    t.match(/([\d,]+(?:\.\d+)?)\s*(?:USD|HKD|JPY|CNY|CNH|홍콩\s*달러|달러|엔(?![가-힣])|円|위안)/i) ||
+    t.match(/(?:USD|HKD|JPY|CNY|CNH)\s*([\d,]+(?:\.\d+)?)/i) ||
     t.match(/[\d,]+\s*주\s*[@x×]?\s*([\d,]+(?:\.\d+)?)\s*원/) ||
     t.match(/@\s*([\d,]+(?:\.\d+)?)/);
   const price = priceM ? num(priceM[1]) : null;
@@ -91,7 +103,7 @@ export function parseFill(raw) {
   return {
     kind: 'fill',
     side, symbol, code, qty, price, amount,
-    currency: isUS ? 'USD' : 'KRW',
+    currency,
     ok: Boolean(side && symbol && qty && price),
   };
 }
