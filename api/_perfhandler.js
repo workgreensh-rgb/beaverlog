@@ -69,6 +69,21 @@ export function sectorLookup(m) {
   };
 }
 
+// 보유 종목 현재가: 비버모투 시세 API (국내 6자리 코드·미국 티커만). 실패하면 평가 생략
+const QUOTE_URL = 'https://beavermotu.vercel.app/api/quotes?watch=';
+async function attachLive(open) {
+  await Promise.all((open || []).map(async (o) => {
+    const sym = o.code && /^\d{6}$/.test(o.code) ? o.code : (/^[A-Z.]{1,6}$/.test(o.name) ? o.name : null);
+    if (!sym || !(o.currency === 'KRW' || o.currency === 'USD')) return;
+    try {
+      const j = await (await fetch(QUOTE_URL + encodeURIComponent(sym))).json();
+      const it = (j.list || []).find((x) => x.sym === sym);
+      const px = it ? (o.currency === 'USD' ? it.usd : it.price) : null;
+      if (px > 0 && o.avgEntry > 0) { o.livePrice = px; o.evalPct = Math.round((px / o.avgEntry - 1) * 10000) / 100; }
+    } catch { /* 시세 실패 → 평가 생략 */ }
+  }));
+}
+
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
@@ -86,6 +101,7 @@ export default async function handler(req, res) {
     computePerformance(posts, (cur, date) => { if (cur !== 'KRW') needs.add(`${cur}|${date}`); return 1; });
     const [fx, sm] = await Promise.all([loadFx(needs), loadSectors()]);
     const result = computePerformance(posts, (cur, date) => (cur === 'KRW' ? 1 : fx.get(`${cur}|${date}`) || null), sectorLookup(sm));
+    await attachLive(result.open);
     result.sectorSource = sm ? `ATLAS (${sm.size}종목)` : 'ATLAS 응답 없음 · 미분류로 표시';
 
     res.setHeader('Cache-Control', 's-maxage=300, stale-while-revalidate=600');
