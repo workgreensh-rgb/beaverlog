@@ -24,6 +24,51 @@ async function loadFx(needs) {
   return out;
 }
 
+// ATLAS 섹터 분류: ATLAS 공개 화면(index.html)에 들어 있는 종목표에서 읽는다.
+// ATLAS에서 분류를 고치면 캐시 만료(6시간) 후 자동 반영. 실패 시 마지막 성공본 사용.
+const ATLAS_URL = 'https://atlas-market-kis.pages.dev/';
+const SECTOR_TTL_MS = 6 * 3600 * 1000;
+let sectorCache = { at: 0, map: null };
+const norm = (s) => String(s || '').replace(/\s+/g, '').toUpperCase();
+
+export function buildSectorMap(html) {
+  const byCode = new Map(), byTicker = new Map(), byName = new Map();
+  const re = /\{"ticker":"[^{}]*?"sec1":"[^"]*"[^{}]*?\}/g;
+  for (const raw of html.match(re) || []) {
+    let o; try { o = JSON.parse(raw); } catch { continue; }
+    if (!o.sec1) continue;
+    const v = { sector: o.sec1, sub: o.sec2 || '' };
+    const t = String(o.ticker || '');
+    const kr = t.match(/^(\d{6})\s+K[SQ]\b/);
+    if (kr && !byCode.has(kr[1])) byCode.set(kr[1], v);
+    const head = norm(t.split(' ')[0]);
+    if (head && !byTicker.has(head)) byTicker.set(head, v);
+    for (const n of [o.name, o.en]) { const k = norm(n); if (k && !byName.has(k)) byName.set(k, v); }
+  }
+  return { byCode, byTicker, byName, size: byName.size };
+}
+
+async function loadSectors() {
+  if (sectorCache.map && Date.now() - sectorCache.at < SECTOR_TTL_MS) return sectorCache.map;
+  try {
+    const r = await fetch(ATLAS_URL, { headers: { 'User-Agent': 'beaverlog-performance' } });
+    if (r.ok) {
+      const m = buildSectorMap(await r.text());
+      if (m.size > 100) sectorCache = { at: Date.now(), map: m };
+    }
+  } catch { /* ATLAS 응답 실패 → 직전 캐시 유지 */ }
+  return sectorCache.map;
+}
+
+export function sectorLookup(m) {
+  return (name, code) => {
+    if (!m) return null;
+    if (code && m.byCode.has(code)) return m.byCode.get(code);
+    const k = norm(name);
+    return m.byName.get(k) || m.byTicker.get(k) || null;
+  };
+}
+
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
@@ -39,8 +84,9 @@ export default async function handler(req, res) {
     // 1차 계산으로 필요한 환율 목록을 뽑고, 2차 계산에 반영
     const needs = new Set();
     computePerformance(posts, (cur, date) => { if (cur !== 'KRW') needs.add(`${cur}|${date}`); return 1; });
-    const fx = await loadFx(needs);
-    const result = computePerformance(posts, (cur, date) => (cur === 'KRW' ? 1 : fx.get(`${cur}|${date}`) || null));
+    const [fx, sm] = await Promise.all([loadFx(needs), loadSectors()]);
+    const result = computePerformance(posts, (cur, date) => (cur === 'KRW' ? 1 : fx.get(`${cur}|${date}`) || null), sectorLookup(sm));
+    result.sectorSource = sm ? `ATLAS (${sm.size}종목)` : 'ATLAS 응답 없음 · 미분류로 표시';
 
     res.setHeader('Cache-Control', 's-maxage=300, stale-while-revalidate=600');
     return res.status(200).json({ ok: true, asof: new Date().toISOString(), ...result });
