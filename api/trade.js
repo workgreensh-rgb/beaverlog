@@ -42,7 +42,14 @@ function seoulStamp() {
   return new Date().toLocaleString('sv-SE', { timeZone: 'Asia/Seoul' }).slice(0, 16);
 }
 
-const fmt = (n, cur) => (n == null ? '?' : cur === 'USD' ? `$${n}` : `${Number(n).toLocaleString('ko-KR')}원`);
+// 통화별 표시: 원은 원 단위, 외화는 소수점 유지
+const CUR_LABEL = { KRW: '원', USD: '달러', JPY: '엔', HKD: '홍콩달러', CNY: '위안' };
+const fmt = (n, cur) => {
+  if (n == null) return '?';
+  if (cur === 'USD') return `$${Number(n).toLocaleString('en-US', { maximumFractionDigits: 4 })}`;
+  const v = Number(n).toLocaleString('ko-KR', { maximumFractionDigits: 4 });
+  return `${v}${CUR_LABEL[cur] || '원'}`;
+};
 
 async function sendTelegram(chatId, text) {
   const r = await fetch(`${TG}/sendMessage`, {
@@ -99,7 +106,7 @@ export default async function handler(req, res) {
         const buyPx = pm ? Number(pm[1]) : null;
         const days = Math.round((Date.now() - new Date(prev[0].posted_at).getTime()) / 86400000);
         const ret = buyPx ? ((f.price / buyPx - 1) * 100).toFixed(1) : null;
-        link = `[매도 연결] 직전 매수 ${fmt(buyPx, f.currency)} → 수익률 ${ret != null ? (ret > 0 ? '+' : '') + ret + '%' : '?'} · 보유 ${days}일 (수수료·세금 제외, 직전 1건 기준)`;
+        link = `[매도 연결] 직전 매수 ${fmt(buyPx, f.currency)} → 수익률 ${ret != null ? (ret > 0 ? '+' : '') + ret + '%' : '?'} · 보유 ${days}일 (${f.currency !== 'KRW' ? '현지통화 기준·환율 제외, ' : ''}수수료·세금 제외, 직전 1건 기준)`;
         const rm = (prev[0].body || '').match(/\[사유\]\s*([\s\S]*?)(?:\n---|\n\[|$)/);
         if (rm && rm[1].trim() && !rm[1].includes('답장 대기')) prevReason = `[직전 매수 사유] ${rm[1].trim()}`;
       }
@@ -109,6 +116,7 @@ export default async function handler(req, res) {
       f.ok
         ? `[체결] ${f.side} · ${f.symbol}${f.code ? ' (' + f.code + ')' : ''} · ${f.qty}주 · ${fmt(f.price, f.currency)}${f.amount ? ' · 금액 ' + fmt(f.amount, f.currency) : ''}`
         : '[체결] 자동 해석 실패 — 아래 원문 참고',
+      `[통화] ${f.currency}`,
       `[기록시각] ${when} KST`,
       test ? '[구분] 모의 테스트' : '',
       link,
