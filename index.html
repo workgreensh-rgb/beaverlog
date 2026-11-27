@@ -31,26 +31,26 @@
     line-height: 1.65;
     min-height: 100vh;
   }
-  .wrap { max-width: 960px; margin: 0 auto; padding: 40px 20px 80px; }
+  .wrap { max-width: 1200px; margin: 0 auto; padding: 22px 20px 80px; }
 
   /* ── 헤더 ── */
-  header { margin-bottom: 34px; }
+  header { margin-bottom: 18px; }
   .eyebrow {
     font-size: 11px; letter-spacing: 0.22em; color: var(--river);
-    text-transform: uppercase; margin-bottom: 10px; font-weight: 600;
+    text-transform: uppercase; margin-bottom: 4px; font-weight: 600;
   }
   h1 {
     font-family: 'Gowun Batang', serif;
     font-size: clamp(30px, 6vw, 40px);
-    font-weight: 700; letter-spacing: -0.01em; line-height: 1.25;
+    font-weight: 700; letter-spacing: -0.01em; line-height: 1.15;
   }
   h1 .homebeaver { text-decoration: none; cursor: pointer; }
   h1 .homebeaver:hover { filter: brightness(1.2); }
   .homebeaver { text-decoration: none; cursor: pointer; display: inline-block; transition: transform .15s; }
   .homebeaver:hover, .homebeaver:focus-visible { transform: scale(1.12); outline: none; }
-  .tagline { color: var(--paper-dim); font-size: 14px; margin-top: 8px; }
+  .tagline { color: var(--paper-dim); font-size: 14px; margin-top: 4px; }
   .sitedesc { color: var(--amber); font-size: 12.5px; margin-top: 5px; letter-spacing: 0.02em; }
-  .byline { font-size: 12.5px; color: #7d6c54; margin-top: 7px; }
+  .byline { font-size: 12.5px; color: #7d6c54; margin-top: 2px; }
   .byline .role { letter-spacing: 0.14em; color: var(--river); font-size: 10.5px; margin-right: 6px; }
   .headrow { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
 
@@ -124,7 +124,7 @@
   }
 
   /* ── 필터 ── */
-  .filters { display: flex; gap: 8px; margin-bottom: 26px; flex-wrap: wrap; }
+  .filters { display: flex; gap: 8px; margin-bottom: 18px; flex-wrap: wrap; }
   .filters button {
     background: none; border: 1px solid var(--log-edge); color: var(--paper-dim);
     border-radius: 999px; padding: 6px 16px; font-size: 13px; cursor: pointer;
@@ -363,7 +363,6 @@
   @media (max-width: 560px) { .ai-rules { grid-template-columns: 1fr; } }
   .ai-rules div b { color: var(--rc, var(--violet)); font-weight: 600; margin-right: 6px; }
   /* AI 탭 넓은 화면 + 2단 · 세로 압축 */
-  .wrap.wide { max-width: 1200px; }
   .ai-cols { display: grid; grid-template-columns: minmax(0, 1.75fr) minmax(0, 1fr); gap: 12px; align-items: stretch; margin-bottom: 12px; }
   .ai-cols .rl-card { margin-bottom: 0; display: flex; flex-direction: column; }
   .ai-cols .rl-bd { flex: 1; display: flex; flex-direction: column; justify-content: center; }
@@ -751,7 +750,6 @@
   }
 
   function render() {
-    document.querySelector('.wrap').classList.toggle('wide', filter === 'AI' && !permalinkId);
     if (filter === '실전기록') { renderReal(); return; }
     if (filter === '방명록') {
       if (gb === null) {
