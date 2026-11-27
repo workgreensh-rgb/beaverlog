@@ -3,11 +3,12 @@
 //       초안 메시지에 '답장'으로 고친 전문을 보내면 수정본으로 교체
 //       [발행] → 최종본을 봇 DM으로 다시 보내고 비버로그 '시황'에 저장
 import { neon } from '@neondatabase/serverless';
+import { MANAGER_KINDS } from './_manager.js';
 
 export const sql = neon(process.env.DATABASE_URL);
 const TG = `https://api.telegram.org/bot${process.env.TG_TOKEN}`;
 
-export const KINDS = { brief: '모닝브리프', news: '데일리뉴스' };
+export const KINDS = { brief: '모닝브리프', news: '데일리뉴스', ...MANAGER_KINDS };
 
 export async function ensureDraftTables() {
   await sql`CREATE TABLE IF NOT EXISTS drafts (
@@ -88,6 +89,7 @@ export async function clearButtons(owner, draftId) {
 
 // 첫 줄로 비버로그 제목 만들기
 export function titleOf(kind, text) {
+  if (MANAGER_KINDS[kind]) return (String(text).split('\n')[0] || '').replace(/^#콜\s*/, '').trim();
   const first = (String(text).split('\n')[0] || '').replace(/^#\s*/, '').trim();
   if (kind === 'brief') {
     const t = first.replace(/^모닝브리프\s*/, '').trim();
@@ -108,12 +110,14 @@ export async function publishDraft(owner, draft) {
   const lines = String(draft.text).split('\n');
   const title = titleOf(draft.kind, draft.text);
   const body = lines.slice(1).join('\n').trim();
-  const key = `draft:${draft.kind}:${seoulDate()}`;
+  const managerCall = Boolean(MANAGER_KINDS[draft.kind]);
+  const key = managerCall ? `draft:${draft.kind}:${draft.id}` : `draft:${draft.kind}:${seoulDate()}`;
   await sql`
     INSERT INTO journal_posts (tg_msg_id, title, body, category, is_private, attachments, posted_at)
-    VALUES (${key}, ${title}, ${body}, '시황', false, '[]'::jsonb, now())
+    VALUES (${key}, ${title}, ${body}, ${managerCall ? '콜' : '시황'}, ${managerCall}, '[]'::jsonb, now())
     ON CONFLICT (tg_msg_id) DO UPDATE
-    SET title = EXCLUDED.title, body = EXCLUDED.body, category = '시황', updated_at = now()`;
+    SET title = EXCLUDED.title, body = EXCLUDED.body, category = EXCLUDED.category,
+        is_private = EXCLUDED.is_private, updated_at = now()`;
   out.saved = true;
   await sql`UPDATE drafts SET status = 'published', updated_at = now() WHERE id = ${draft.id}`;
   return out;
@@ -141,6 +145,10 @@ export async function handleDraftCallback(update, owner) {
     await clearButtons(owner, id);
     return true;
   }
+  if (act === 'dpub' && MANAGER_KINDS[d.kind] && d.text.includes('[작성 필요]')) {
+    await tg('answerCallbackQuery', { callback_query_id: cq.id, text: '작성 필요 항목을 모두 채운 뒤 답장해 주세요', show_alert: true });
+    return true;
+  }
   if (act === 'ddel') {
     await sql`UPDATE drafts SET status = 'discarded', updated_at = now() WHERE id = ${id}`;
     await clearButtons(owner, id);
@@ -153,7 +161,7 @@ export async function handleDraftCallback(update, owner) {
   const r = await publishDraft(owner, d);
   await tg('sendMessage', {
     chat_id: owner,
-    text: `🦫 ${KINDS[d.kind] || d.kind} 발행 완료 · 비버로그 시황${r.telegram ? '' : ' (최종본 DM 일부 실패)'}`,
+    text: `🦫 ${KINDS[d.kind] || d.kind} 발행 완료 · 비버로그 ${MANAGER_KINDS[d.kind] ? '콜 · 비공개 🔒' : '시황'}${r.telegram ? '' : ' (최종본 DM 일부 실패)'}`,
   });
   return true;
 }

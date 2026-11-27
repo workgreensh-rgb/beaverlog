@@ -1,5 +1,6 @@
 import { neon } from '@neondatabase/serverless';
-import { handleDraftCallback, handleDraftReply } from './_draft.js';
+import { handleDraftCallback, handleDraftReply, ensureDraftTables, sendPreview } from './_draft.js';
+import { ownerCallTemplate } from './_manager.js';
 
 const sql = neon(process.env.DATABASE_URL);
 const TG = `https://api.telegram.org/bot${process.env.TG_TOKEN}`;
@@ -102,6 +103,17 @@ export default async function handler(req, res) {
       return res.status(200).send('ok');
     }
     if (String(chatId) !== owner) return res.status(200).send('ok');
+
+    // 주인이 텔레그램에서 직접 작성하는 콜도 기존 초안 승인 흐름으로 보냄.
+    if (!isEdit) {
+      const template = ownerCallTemplate(text);
+      if (template) {
+        await ensureDraftTables();
+        const drafts = await sql`INSERT INTO drafts (kind, text) VALUES (${template.kind}, ${template.text}) RETURNING id, kind, text, status`;
+        await sendPreview(owner, drafts[0]);
+        return res.status(200).send('ok');
+      }
+    }
 
     // ── 초안 메시지에 "답장"하면 수정본으로 교체 ──
     if (msg.reply_to_message && !isEdit && (await handleDraftReply(msg, owner))) return res.status(200).send('ok');

@@ -4,6 +4,7 @@
 // 하루 접수 건수와 길이를 제한한다.
 //   GET  /api/draft?check=1  → 봇 웹훅이 버튼(callback_query)을 받는지 점검
 import { sql, ensureDraftTables, sendPreview, tg, KINDS } from './_draft.js';
+import { MANAGER_KINDS, formatManagerCall, isWeeklyWindow } from './_manager.js';
 
 const DAILY_LIMIT = 12;
 
@@ -39,8 +40,21 @@ export default async function handler(req, res) {
   let b = req.body || {};
   if (typeof b === 'string') { try { b = JSON.parse(b); } catch { b = {}; } }
   const kind = String(b.kind || '');
-  const text = String(b.text || '').replace(/\r/g, '').trim();
-  if (!KINDS[kind]) return res.status(400).json({ ok: false, error: 'kind must be brief or news' });
+  if (!KINDS[kind]) return res.status(400).json({ ok: false, error: 'unknown kind' });
+  const managerCall = Boolean(MANAGER_KINDS[kind]);
+  if (managerCall && (!process.env.MANAGER_DRAFT_KEY || req.headers['x-manager-draft-key'] !== process.env.MANAGER_DRAFT_KEY)) {
+    return res.status(401).json({ ok: false, error: 'manager draft authorization required' });
+  }
+  if (managerCall && b.dataClassification !== 'public') {
+    return res.status(400).json({ ok: false, error: 'only public, externally storable information is accepted' });
+  }
+  let text;
+  try {
+    if (managerCall && kind === 'manager_weight' && b.automatic === true && !isWeeklyWindow()) {
+      throw new Error('automatic weekly draft only after Friday market close (15:30 KST)');
+    }
+    text = managerCall ? formatManagerCall(kind, b.data, b.source || 'user') : String(b.text || '').replace(/\r/g, '').trim();
+  } catch (e) { return res.status(400).json({ ok: false, error: String(e.message || e) }); }
   if (text.length < 20 || text.length > 12000) return res.status(400).json({ ok: false, error: 'text length 20~12000' });
 
   try {
