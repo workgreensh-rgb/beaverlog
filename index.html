@@ -39,22 +39,22 @@
   /* ── 헤더 ── */
   header { margin-bottom: 18px; }
   .eyebrow {
-    font-size: 11px; letter-spacing: 0.22em; color: var(--river);
+    font-size: 10px; letter-spacing: 0.2em; color: var(--river);
     text-transform: uppercase; margin-bottom: 4px; font-weight: 600;
   }
   h1 {
     font-family: 'Gowun Batang', serif;
-    font-size: clamp(24px, 4.6vw, 30px);
+    font-size: clamp(21px, 4vw, 24px);
     font-weight: 700; letter-spacing: -0.01em; line-height: 1.15;
   }
   h1 .homebeaver { text-decoration: none; cursor: pointer; }
   h1 .homebeaver:hover { filter: brightness(1.2); }
   .homebeaver { text-decoration: none; cursor: pointer; display: inline-block; transition: transform .15s; }
   .homebeaver:hover, .homebeaver:focus-visible { transform: scale(1.12); outline: none; }
-  .tagline { color: var(--paper-dim); font-size: 14px; margin-top: 4px; }
+  .tagline { color: var(--paper-dim); font-size: 12.5px; margin-top: 3px; }
   .sitedesc { color: var(--amber); font-size: 12.5px; margin-top: 5px; letter-spacing: 0.02em; }
-  .byline { font-size: 12.5px; color: #7d6c54; margin-top: 2px; }
-  .byline .role { letter-spacing: 0.14em; color: var(--river); font-size: 10.5px; margin-right: 6px; }
+  .byline { font-size: 11.5px; color: #7d6c54; margin-top: 1px; }
+  .byline .role { letter-spacing: 0.14em; color: var(--river); font-size: 10px; margin-right: 6px; }
   .headrow { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
 
   /* 잠금 해제 */
@@ -388,6 +388,35 @@
   .wf-split, .wf-merge { height: 16px; }
   .wf-split::before, .wf-merge::before, .wf-split::after, .wf-merge::after { height: 8px; }
   .wf-note { margin-top: 6px; font-size: 11px; }
+  /* 상단 탭 고정 */
+  .filters { position: sticky; top: 0; z-index: 40; background: var(--bark); padding: 10px 0; margin-top: -10px; margin-bottom: 10px; box-shadow: 0 6px 10px -8px rgba(0,0,0,0.6); }
+  /* 실전 기록 세로 압축 */
+  .rl-head { margin-bottom: 8px; display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; }
+  .rl-head h2 { font-size: 20px; margin-bottom: 0; }
+  .rl-kpis { gap: 8px; margin-bottom: 8px; }
+  .rl-kpi { padding: 7px 12px; border-radius: 10px; }
+  .rl-kpi .v { font-size: 19px; margin-top: 0; line-height: 1.3; }
+  .rl-grid { gap: 8px; margin-bottom: 8px; }
+  .rl-card { margin-bottom: 8px; border-radius: 10px; }
+  .rl-ch { padding: 7px 14px; } .rl-ch b { font-size: 14px; }
+  .rl-bd { padding: 8px 14px; }
+  .rl-bar { height: 8px; margin-bottom: 6px; }
+  .rl-srow { padding: 2px 0; } .rl-row { padding: 5px 0; }
+  .rl-tr { padding: 8px 10px; margin-bottom: 6px; }
+  .rl-meta { margin: 0 0 2px; }
+  .rl-tl { margin: 2px 0; }
+  .rl-why { margin-top: 0; }
+  /* AI 관제센터 세로 압축 */
+  .ai-intro { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; margin-bottom: 8px; }
+  .ai-intro h2 { font-size: 20px; margin-bottom: 0; }
+  .ai-intro p { margin-bottom: 0; }
+  .ai-kpis { margin-bottom: 8px; }
+  .ai-kpi { padding: 4px 12px; }
+  .ai-kpi .v { font-size: 16px; }
+  .ai-hub .rl-ch { padding: 6px 14px; }
+  .ai-hub .rl-bd { padding: 6px 14px 8px; }
+  .ai-proj { padding: 2px 0; font-size: 12.5px; }
+  .ai-cols { margin-bottom: 6px; }
   .ai-postshead { font-size: 11px; letter-spacing: 0.18em; color: var(--paper-dim); text-transform: uppercase; margin: 22px 0 12px; }
 </style>
 </head>
@@ -625,7 +654,7 @@
     : Number(n).toLocaleString('ko-KR', { maximumFractionDigits: c === 'KRW' ? 0 : 2 }) + (RL_CUR[c] || '원'));
   function rlTimeline(points, cur) {
     if (points.length < 2) return '';
-    const W = 300, H = 52, P = 8;
+    const W = 300, H = 34, P = 6;
     const t = points.map((p) => new Date(p.date).getTime()), v = points.map((p) => p.price);
     const t0 = Math.min(...t), t1 = Math.max(...t), v0 = Math.min(...v), v1 = Math.max(...v);
     const x = (i) => P + (t1 > t0 ? (t[i] - t0) / (t1 - t0) : i / (points.length - 1)) * (W - 2 * P);
@@ -673,6 +702,7 @@
           ? stocks.map((x) => `<div class="rl-row"><span>${esc(x.name)}<span class="rl-tag">${esc(x.sector)}${RL_MKT[x.market] ? ' · ' + RL_MKT[x.market] : ''} · ${x.buys + x.sells}회${x.holding ? ' · 보유' : ''}</span></span><span class="rl-r"><span class="rl-mute" style="margin-right:10px">${(x.weightPct || 0).toFixed(1)}%</span><b class="${rlCls(x.totalPct)}">${rlPct(x.totalPct, 1)}</b></span></div>`).join('')
           : '<div class="rl-mute">아직 기록이 없습니다</div>'}</div></div>
       </div>
+      <div class="rl-grid">
       <div class="rl-card"><div class="rl-ch"><b>보유 중</b><span>${open.length ? open.length + '종목' : ''}</span></div><div class="rl-bd">${open.length ? open.map((o) => `
         <div class="rl-tr"><div class="rl-trh"><b>${esc(o.name)}<span class="rl-tag">${esc(o.sector || '')}${RL_MKT[o.market] ? ' · ' + RL_MKT[o.market] : ''}</span></b><span class="ret ${o.evalPct != null ? rlCls(o.evalPct) : 'rl-mute'}">${o.evalPct != null ? rlPct(o.evalPct) : '시세 미지원'}<span class="rl-tag">평가</span></span></div>
           <div class="rl-meta">${rlMd(o.buyDate)} 첫 매수 · 평균 타점 ${rlMoney(o.avgEntry, o.currency)}${o.livePrice ? ' · 현재가 ' + rlMoney(o.livePrice, o.currency) : ''}${(o.entries || []).length > 1 ? ' · 분할매수 ' + o.entries.length + '회' : ''}</div>
@@ -684,6 +714,7 @@
           ${rlTimeline((c.entries || []).map((p) => ({ ...p, type: 'buy' })).concat([{ date: c.sellDate, price: c.sellPrice, type: 'sell' }]), c.currency)}
           ${(c.buyReasons || []).map((r) => `<div class="rl-why"><span>매수 사유</span>${esc(r)}</div>`).join('')}
           ${c.sellReason ? `<div class="rl-why"><span>매도 사유</span>${esc(c.sellReason)}</div>` : ''}</div>`).join('') : '<div class="rl-mute">아직 실현한 거래가 없습니다</div>'}</div></div>
+      </div>
       <div class="rl-foot">기준: ${esc(d.basis)}<br>비중은 누적 투입원가 기준이며 외화 종목은 매수일 기준환율로 환산한 추정치입니다. 섹터 분류: ATLAS.<br>보유 종목 평가는 국내·미국 시세로 계산하며, 그 외 시장은 평가에서 빠집니다. 갱신 ${new Date(d.asof).toLocaleString('ko-KR')}</div>`;
   }
 
@@ -693,16 +724,16 @@
     asof: '2026-11-27',
     // pct: 잠정 완성도(AI 평가, 실측 아님) · null = 미평가
     projects: [
-      { id: 'H', area: 'AI 협업 인프라', pct: 93, st: 'done', c: '#c9a07a' },
-      { id: 'J', area: '매매 알림 자동화', pct: 80, st: 'done', c: '#f0a15e' },
-      { id: 'B', area: '시장 데이터 대시보드', pct: 75, st: 'doing', c: '#6aa5f0' },
-      { id: 'C', area: '뉴스 브리핑 자동화', pct: 70, st: 'doing', c: '#e6c548' },
-      { id: 'E', area: '생활 기록 웹앱', pct: 60, st: 'doing', c: '#e886b6' },
-      { id: 'D', area: '모의투자 웹앱', pct: 55, st: 'doing', c: '#b195e8' },
-      { id: 'A', area: '개인 기록·포트폴리오 사이트', pct: 53, st: 'doing', c: '#62c08f' },
-      { id: 'G', area: '업무 문서 자동화', pct: 38, st: 'doing', c: '#b8b8b8' },
-      { id: 'I', area: '소규모 웹서비스', pct: 10, st: 'idea', c: '#f09a62' },
-      { id: 'F', area: '공시 알림 봇', pct: null, st: 'na', c: '#e07a6e' },
+      { id: 'H', area: '협업 시스템', pct: 93, st: 'done', c: '#c9a07a' },
+      { id: 'J', area: '알림 자동화', pct: 80, st: 'done', c: '#f0a15e' },
+      { id: 'B', area: '데이터 시각화', pct: 75, st: 'doing', c: '#6aa5f0' },
+      { id: 'C', area: '콘텐츠 자동화', pct: 70, st: 'doing', c: '#e6c548' },
+      { id: 'E', area: '개인용 웹앱', pct: 60, st: 'doing', c: '#e886b6' },
+      { id: 'D', area: '학습용 웹앱', pct: 55, st: 'doing', c: '#b195e8' },
+      { id: 'A', area: '개인 아카이브', pct: 53, st: 'doing', c: '#62c08f' },
+      { id: 'G', area: '업무 효율화', pct: 38, st: 'doing', c: '#b8b8b8' },
+      { id: 'I', area: '신규 서비스 실험', pct: 10, st: 'idea', c: '#f09a62' },
+      { id: 'F', area: '정보 수집 봇', pct: null, st: 'na', c: '#e07a6e' },
     ],
   };
   function aiHub() {
@@ -721,7 +752,7 @@
       </div>`).join('');
     return `
       <section class="ai-hub" aria-label="AI 프로젝트 관제센터">
-        <div class="ai-intro"><h2>AI 프로젝트 관제센터</h2><p>ChatGPT와 Claude를 함께 써서 만드는 개인 프로젝트 현황입니다 · 프로젝트는 익명 코드로 표시합니다</p></div>
+        <div class="ai-intro"><h2>AI 프로젝트 관제센터</h2><p>ChatGPT와 Claude로 만드는 개인 프로젝트 현황 · 익명 코드로 표시</p></div>
         <div class="ai-kpis">
           ${kpi('전체 프로젝트', N + '개', '', 'var(--paper)')}
           ${kpi('진행 중', pc(doing), doing + '개', '#7fb0ec')}
