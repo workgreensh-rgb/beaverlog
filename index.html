@@ -25,6 +25,8 @@
   }
   * { margin: 0; padding: 0; box-sizing: border-box; }
   html { scrollbar-gutter: stable; }
+  /* PC: 브라우저 80% 배율과 같은 밀도로 표시 (모바일은 원래 크기) */
+  @media (min-width: 900px) { body { zoom: 0.8; } }
   body {
     background: var(--bark);
     color: var(--paper);
@@ -32,7 +34,7 @@
     line-height: 1.65;
     min-height: 100vh;
   }
-  .wrap { max-width: 1200px; margin: 0 auto; padding: 22px 20px 80px; }
+  .wrap { max-width: 1500px; margin: 0 auto; padding: 22px clamp(18px, 4vw, 56px) 80px; }
 
   /* ── 헤더 ── */
   header { margin-bottom: 18px; }
@@ -42,7 +44,7 @@
   }
   h1 {
     font-family: 'Gowun Batang', serif;
-    font-size: clamp(30px, 6vw, 40px);
+    font-size: clamp(24px, 4.6vw, 30px);
     font-weight: 700; letter-spacing: -0.01em; line-height: 1.15;
   }
   h1 .homebeaver { text-decoration: none; cursor: pointer; }
