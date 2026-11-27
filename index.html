@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>비버의 저장소 — Beaverlog</title>
+<title>비버의 아카이브 — BEAVER'S ARCHIVE</title>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🦫</text></svg>">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -306,6 +306,46 @@
   .rl-why { font-size: 13px; margin-top: 2px; } .rl-why span { color: var(--paper-dim); margin-right: 6px; }
   .rl-tl { display: block; margin: 4px 0; }
   .rl-foot { font-size: 11px; color: var(--paper-dim); line-height: 1.7; margin-top: 6px; }
+
+  /* ATLAS 바로가기 */
+  .atlasbtn { text-decoration: none; display: inline-block; color: var(--river); border-color: var(--river); font-weight: 600; letter-spacing: 0.06em; }
+  .atlasbtn:hover, .atlasbtn:focus-visible { color: var(--bark); background: var(--river); border-color: var(--river); }
+  @media (max-width: 560px) { .headrow { flex-wrap: wrap; } .lockbox { flex-wrap: wrap; } }
+
+  /* ── AI 탭: 공개용 관제센터 · 협업 구조 ── */
+  .ai-hub { margin-bottom: 26px; }
+  .ai-hub .rl-ch b { font-family: 'Gowun Batang', serif; }
+  .ai-intro h2 { font-family: 'Gowun Batang', serif; font-size: 22px; margin-bottom: 4px; }
+  .ai-intro p { font-size: 12.5px; color: var(--paper-dim); margin-bottom: 14px; }
+  .ai-kpis { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; margin-bottom: 12px; }
+  @media (max-width: 720px) { .ai-kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+  .ai-proj { display: grid; grid-template-columns: 34px minmax(0, 1.4fr) minmax(0, 1fr) 92px; gap: 10px; align-items: center; padding: 9px 0; border-bottom: 1px solid var(--log-edge); font-size: 13px; }
+  .ai-proj:last-child { border-bottom: none; }
+  .ai-id { width: 28px; height: 28px; border-radius: 8px; display: inline-flex; align-items: center; justify-content: center; font-weight: 700; font-size: 13px; color: var(--violet); border: 1px solid var(--violet); background: rgba(164,147,209,0.08); }
+  .ai-pname { font-weight: 600; }
+  .ai-pdesc { display: block; font-size: 11.5px; color: var(--paper-dim); font-weight: 400; }
+  .ai-steps { display: flex; gap: 3px; }
+  .ai-steps i { flex: 1; height: 6px; border-radius: 3px; background: var(--bark); border: 1px solid var(--log-edge); }
+  .ai-steps i.on { background: var(--violet); border-color: var(--violet); }
+  .ai-stage { font-size: 11px; color: var(--paper-dim); margin-top: 4px; }
+  .ai-badge { font-size: 11px; text-align: center; border-radius: 999px; padding: 3px 8px; border: 1px solid var(--log-edge); color: var(--paper-dim); white-space: nowrap; }
+  .ai-badge.live { color: var(--moss); border-color: var(--moss); }
+  .ai-badge.dev { color: var(--amber); border-color: var(--amber); }
+  .ai-badge.idea { color: var(--paper-dim); }
+  @media (max-width: 560px) { .ai-proj { grid-template-columns: 30px minmax(0, 1fr) 80px; } .ai-proj .ai-prog { grid-column: 2 / 4; } }
+  .ai-flow { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 10px; }
+  @media (max-width: 720px) { .ai-flow { grid-template-columns: 1fr; } }
+  .ai-node { background: var(--bark); border: 1px solid var(--log-edge); border-radius: 10px; padding: 12px 14px; }
+  .ai-node.wide { grid-column: 1 / -1; }
+  .ai-node .t { font-size: 13.5px; font-weight: 600; margin-bottom: 3px; }
+  .ai-node .t span { font-size: 10.5px; letter-spacing: 0.14em; color: var(--violet); margin-right: 6px; font-weight: 600; }
+  .ai-node ul { list-style: none; font-size: 12.5px; color: var(--paper-dim); }
+  .ai-node li::before { content: '· '; color: var(--violet); }
+  .ai-arrow { grid-column: 1 / -1; text-align: center; font-size: 11.5px; color: var(--paper-dim); letter-spacing: 0.08em; }
+  .ai-rules { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px 14px; font-size: 12.5px; }
+  @media (max-width: 560px) { .ai-rules { grid-template-columns: 1fr; } }
+  .ai-rules div b { color: var(--violet); font-weight: 600; margin-right: 6px; }
+  .ai-postshead { font-size: 11px; letter-spacing: 0.18em; color: var(--paper-dim); text-transform: uppercase; margin: 22px 0 12px; }
 </style>
 </head>
 <body>
@@ -313,12 +353,13 @@
   <header>
     <div class="headrow">
       <div>
-        <div class="eyebrow">BEAVERLOG — 주식스터디 · 투자일지</div>
-        <h1><a href="/" class="homebeaver" title="전체 글 보기">🦫</a> 비버의 저장소</h1>
+        <div class="eyebrow">BEAVER'S ARCHIVE — 주식 · 부동산 · AI 기록</div>
+        <h1><a href="/" class="homebeaver" title="전체 글 보기">🦫</a> 비버의 아카이브</h1>
         <p class="tagline">거창한 계획 대신, 매일 하나씩 물어다 놓습니다.</p>
         <p class="byline"><span class="role">주인장</span>비로(BEERO)</p>
       </div>
       <div class="lockbox">
+        <a class="writebtn atlasbtn" href="https://atlas-market-kis.pages.dev/" target="_blank" rel="noopener noreferrer" title="ATLAS — 글로벌 섹터 로테이션 대시보드 (새 창)">ATLAS ↗</a>
         <button class="writebtn" id="backupBtn" type="button" title="전체 글을 JSON 파일로 저장">💾</button>
         <button class="writebtn" id="writeBtn" type="button">✏️ 글쓰기</button>
         <button class="lockbtn" id="lockBtn" type="button">🔒 열람</button>
@@ -374,7 +415,7 @@
     <div class="empty"><span class="mark">🪵</span>불러오는 중…</div>
   </main>
 
-  <footer>Beaverlog · Written via Telegram · One log a day</footer>
+  <footer>Beaver's Archive · Written via Telegram · One log a day</footer>
 </div>
 
 <div class="visits" id="visits" hidden><span class="paw">🐾</span> 오늘 <b id="vToday">0</b><span class="sep">|</span>전체 <b id="vTotal">0</b></div>
@@ -603,6 +644,68 @@
       <div class="rl-foot">기준: ${esc(d.basis)}<br>비중은 누적 투입원가 기준이며 외화 종목은 매수일 기준환율로 환산한 추정치입니다. 섹터 분류: ATLAS.<br>보유 종목 평가는 국내·미국 시세로 계산하며, 그 외 시장은 평가에서 빠집니다. 갱신 ${new Date(d.asof).toLocaleString('ko-KR')}</div>`;
   }
 
+  // ── AI 탭: 공개용 관제센터 (익명화 정적 데이터 · 내부 원본과 연결되지 않음) ──
+  // 실제 프로젝트명·상세 작업·내부 링크는 넣지 않는다. 수동 검토 후 갱신.
+  const AI_STAGES = ['아이디어', '설계', '개발', '운영', '고도화'];
+  const AI_PUBLIC = {
+    asof: '2026-11-27',
+    tasks: { open: 33, doing: 5 },
+    projects: [
+      { id: 'A', area: '개인 기록·포트폴리오 사이트', desc: '기록 · 공개 수익률 · AI 작업 소개', stage: 5, state: 'live', note: '운영 · 기능 확장' },
+      { id: 'B', area: '시장 데이터 대시보드', desc: '다국가 섹터·수급 시각화', stage: 4, state: 'live', note: '운영 · 과거 데이터 축적' },
+      { id: 'C', area: '뉴스 브리핑 자동화', desc: '일일 브리핑 초안 · 승인 · 발행', stage: 4, state: 'live', note: '운영 · 발행 자동화 전환' },
+      { id: 'D', area: '모의투자 웹앱', desc: '가상 주문 · 잔고 · 수익률', stage: 4, state: 'live', note: '운영 · 개선 대기' },
+      { id: 'E', area: '생활 기록 웹앱', desc: '읽기 · 메모 · 응원', stage: 4, state: 'live', note: '운영 · 차기 버전 준비' },
+      { id: 'F', area: '공시 알림 봇', desc: '수집 · 중복 방지 · 메신저 알림', stage: 3, state: 'dev', note: '개발 · 연동 검증' },
+      { id: 'G', area: '업무 문서 자동화', desc: '정형 데이터 입력 · 문서 초안', stage: 2, state: 'dev', note: '설계 · 양식 검증' },
+      { id: 'H', area: 'AI 협업 인프라', desc: '공유 메모리 · 통합 할 일 · AI 간 메시지', stage: 4, state: 'live', note: '운영 · 규칙 검증' },
+      { id: 'I', area: '소규모 웹서비스', desc: '가벼운 웹게임 · 테스트류', stage: 1, state: 'idea', note: '아이디어 · 레퍼런스 정리' },
+    ],
+  };
+  function aiHub() {
+    const P = AI_PUBLIC.projects;
+    const n = (st) => P.filter((p) => p.state === st).length;
+    const badge = { live: ['운영', 'live'], dev: ['개발', 'dev'], idea: ['구상', 'idea'] };
+    const kpi = (l, v, sub) => `<div class="rl-kpi"><div class="l">${l}</div><div class="v">${v}</div><div class="s">${sub}</div></div>`;
+    const rows = P.map((p) => `
+      <div class="ai-proj">
+        <span class="ai-id">${esc(p.id)}</span>
+        <span class="ai-pname">${esc(p.area)}<span class="ai-pdesc">${esc(p.desc)}</span></span>
+        <span class="ai-prog"><span class="ai-steps">${AI_STAGES.map((_, i) => `<i class="${i < p.stage ? 'on' : ''}"></i>`).join('')}</span><span class="ai-stage">${esc(p.note)}</span></span>
+        <span class="ai-badge ${badge[p.state][1]}">${badge[p.state][0]}</span>
+      </div>`).join('');
+    return `
+      <section class="ai-hub" aria-label="AI 프로젝트 관제센터">
+        <div class="ai-intro"><h2>AI 프로젝트 관제센터</h2><p>ChatGPT와 Claude를 함께 써서 만드는 개인 프로젝트 현황입니다 · 프로젝트는 익명 코드로 표시합니다</p></div>
+        <div class="ai-kpis">
+          ${kpi('프로젝트', P.length + '개', '익명 코드 A~' + P[P.length - 1].id)}
+          ${kpi('운영 중', n('live') + '개', '개발 ' + n('dev') + ' · 구상 ' + n('idea'))}
+          ${kpi('열린 작업', AI_PUBLIC.tasks.open + '건', '통합 할 일 기준')}
+          ${kpi('진행 중 작업', AI_PUBLIC.tasks.doing + '건', '병렬 진행')}
+        </div>
+        <div class="rl-card"><div class="rl-ch"><b>프로젝트 단계</b><span>${AI_STAGES.join(' → ')}</span></div><div class="rl-bd">${rows}</div></div>
+        <div class="rl-card"><div class="rl-ch"><b>AI 협업 구조</b><span>두 AI가 하나의 기록을 공유</span></div><div class="rl-bd">
+          <div class="ai-flow">
+            <div class="ai-node wide"><div class="t"><span>DIRECT</span>사용자</div><ul><li>목표·우선순위 결정</li><li>결과 확인 후 승인</li><li>배포·삭제·비용 발생 작업 승인</li></ul></div>
+            <div class="ai-node"><div class="t"><span>PLAN</span>ChatGPT</div><ul><li>기획·구조 설계</li><li>의사결정·기준 정리</li><li>기록·인수인계</li></ul></div>
+            <div class="ai-node"><div class="t"><span>BUILD</span>Claude</div><ul><li>코드 구현·배포</li><li>데이터 검증·오류 진단</li><li>작업 결과 기록</li></ul></div>
+            <div class="ai-arrow">↓ 작업 시작 시 최신 기록 조회 · 작업 후 결과 기록 ↑</div>
+            <div class="ai-node wide"><div class="t"><span>MEMORY</span>공유 메모리 (Notion)</div><ul><li>공통 운영 지침 · 프로젝트별 기준 기록 · 통합 할 일 · 의사결정 로그 · AI 간 메시지함</li><li>AI를 바꿔도 별도 인수인계 없이 같은 맥락에서 이어서 작업</li></ul></div>
+          </div>
+        </div></div>
+        <div class="rl-card"><div class="rl-ch"><b>운영 원칙</b><span>두 AI 공통</span></div><div class="rl-bd ai-rules">
+          <div><b>01</b>사실 · 추정 · 미확인을 나눠 기록</div>
+          <div><b>02</b>실제 검증 후에만 완료 처리</div>
+          <div><b>03</b>기존 기록은 지우지 않고 덧붙이기</div>
+          <div><b>04</b>배포·삭제·비용은 사용자 승인 후 실행</div>
+          <div><b>05</b>인증정보·기밀은 기록하지 않음</div>
+          <div><b>06</b>데이터 임의 생성 금지 · 출처 명시</div>
+        </div></div>
+        <div class="rl-foot">기준일 ${AI_PUBLIC.asof} · 수동 갱신 스냅숏입니다. 단계는 기록에 근거한 정성 분류이며 실측 진척률이 아닙니다. 프로젝트 코드는 실제 명칭과 연결 정보를 공개하지 않습니다.</div>
+        <div class="ai-postshead">AI 작업 기록</div>
+      </section>`;
+  }
+
   function render() {
     if (filter === '실전기록') { renderReal(); return; }
     if (filter === '방명록') {
@@ -624,11 +727,12 @@
         return;
       }
     }
+    const hub = (filter === 'AI' && !permalinkId) ? aiHub() : '';
     if (!shown.length) {
-      list.innerHTML = '<div class="empty"><span class="mark">🪵</span>아직 물어다 놓은 통나무가 없습니다.</div>';
+      list.innerHTML = hub + '<div class="empty"><span class="mark">🪵</span>아직 물어다 놓은 통나무가 없습니다.</div>';
       return;
     }
-    list.innerHTML = back + shown.map((p) => {
+    list.innerHTML = back + hub + shown.map((p) => {
       if (p.locked) {
         return `<article class="post lockedcard" data-cat="${esc(p.category)}">
           <div class="post-meta"><span class="ring"></span><span class="cat">${esc(p.category)}</span><span class="date">${fmtDate(p.posted_at)}</span></div>
