@@ -317,34 +317,75 @@
   .ai-hub .rl-ch b { font-family: 'Gowun Batang', serif; }
   .ai-intro h2 { font-family: 'Gowun Batang', serif; font-size: 22px; margin-bottom: 4px; }
   .ai-intro p { font-size: 12.5px; color: var(--paper-dim); margin-bottom: 14px; }
-  .ai-kpis { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; margin-bottom: 12px; }
-  @media (max-width: 720px) { .ai-kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
-  .ai-proj { display: grid; grid-template-columns: 34px minmax(0, 1.4fr) minmax(0, 1fr) 92px; gap: 10px; align-items: center; padding: 9px 0; border-bottom: 1px solid var(--log-edge); font-size: 13px; }
-  .ai-proj:last-child { border-bottom: none; }
-  .ai-id { width: 28px; height: 28px; border-radius: 8px; display: inline-flex; align-items: center; justify-content: center; font-weight: 700; font-size: 13px; color: var(--violet); border: 1px solid var(--violet); background: rgba(164,147,209,0.08); }
-  .ai-pname { font-weight: 600; }
-  .ai-pdesc { display: block; font-size: 11.5px; color: var(--paper-dim); font-weight: 400; }
-  .ai-steps { display: flex; gap: 3px; }
-  .ai-steps i { flex: 1; height: 6px; border-radius: 3px; background: var(--bark); border: 1px solid var(--log-edge); }
-  .ai-steps i.on { background: var(--violet); border-color: var(--violet); }
-  .ai-stage { font-size: 11px; color: var(--paper-dim); margin-top: 4px; }
-  .ai-badge { font-size: 11px; text-align: center; border-radius: 999px; padding: 3px 8px; border: 1px solid var(--log-edge); color: var(--paper-dim); white-space: nowrap; }
-  .ai-badge.live { color: var(--moss); border-color: var(--moss); }
-  .ai-badge.dev { color: var(--amber); border-color: var(--amber); }
-  .ai-badge.idea { color: var(--paper-dim); }
-  @media (max-width: 560px) { .ai-proj { grid-template-columns: 30px minmax(0, 1fr) 80px; } .ai-proj .ai-prog { grid-column: 2 / 4; } }
+  .ai-kpis { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; margin-bottom: 12px; }
+  @media (max-width: 620px) { .ai-kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+  .ai-kpi { background: var(--log); border: 1px solid var(--log-edge); border-radius: 10px; padding: 8px 12px; }
+  .ai-kpi .l { font-size: 11.5px; color: var(--paper-dim); }
+  .ai-kpi .v { font-size: 19px; font-weight: 700; line-height: 1.3; }
+  .ai-kpi .v small { font-size: 11.5px; font-weight: 500; color: var(--paper-dim); margin-left: 4px; }
+  .ai-thead, .ai-proj { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, 1.6fr) 58px 64px; gap: 14px; align-items: center; }
+  .ai-thead { font-size: 11px; color: var(--paper-dim); padding-bottom: 6px; border-bottom: 1px solid var(--log-edge); }
+  .ai-thead span:nth-child(n+3), .ai-proj > span:nth-child(n+3) { text-align: right; }
+  .ai-proj { padding: 7px 0; font-size: 13.5px; }
+  .ai-pname { color: var(--pc); font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .ai-pname i { font-style: normal; font-size: 10.5px; font-weight: 700; color: var(--bark); background: var(--pc); border-radius: 5px; padding: 1px 5px; margin-right: 7px; vertical-align: 1px; }
+  .ai-bar { height: 8px; border-radius: 999px; background: #3a2e22; overflow: hidden; }
+  .ai-bar b { display: block; height: 100%; border-radius: 999px; background: var(--pc); }
+  .ai-pct { font-weight: 600; font-variant-numeric: tabular-nums; }
+  .ai-pct.na { color: var(--paper-dim); font-weight: 500; font-size: 12px; }
+  .ai-st { font-size: 12px; white-space: nowrap; }
+  .st-done { color: #7ec98f; } .st-doing { color: #7fb0ec; } .st-idea { color: #e2c15a; } .st-na { color: #d98a7a; }
+  @media (max-width: 560px) { .ai-thead, .ai-proj { grid-template-columns: minmax(0, 1fr) 46px 54px; } .ai-thead span:nth-child(2), .ai-proj .ai-bar { display: none; } }
   .ai-flow { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 10px; }
   @media (max-width: 720px) { .ai-flow { grid-template-columns: 1fr; } }
-  .ai-node { background: var(--bark); border: 1px solid var(--log-edge); border-radius: 10px; padding: 12px 14px; }
+  .ai-node { background: var(--bark); border: 1px solid var(--log-edge); border-left: 3px solid var(--nc); border-radius: 10px; padding: 11px 14px; }
   .ai-node.wide { grid-column: 1 / -1; }
-  .ai-node .t { font-size: 13.5px; font-weight: 600; margin-bottom: 3px; }
-  .ai-node .t span { font-size: 10.5px; letter-spacing: 0.14em; color: var(--violet); margin-right: 6px; font-weight: 600; }
+  .ai-node .t { font-size: 13.5px; font-weight: 600; margin-bottom: 3px; color: var(--nc); }
+  .ai-node .t span { font-size: 10px; letter-spacing: 0.14em; color: var(--bark); background: var(--nc); border-radius: 5px; padding: 1px 6px; margin-right: 7px; font-weight: 700; }
   .ai-node ul { list-style: none; font-size: 12.5px; color: var(--paper-dim); }
-  .ai-node li::before { content: '· '; color: var(--violet); }
+  .ai-node li::before { content: '· '; color: var(--nc); }
   .ai-arrow { grid-column: 1 / -1; text-align: center; font-size: 11.5px; color: var(--paper-dim); letter-spacing: 0.08em; }
+  .wf { max-width: 560px; margin: 4px auto 0; display: flex; flex-direction: column; align-items: stretch; }
+  .wf-box { border: 1.5px solid var(--wc); background: var(--wb, rgba(255,255,255,0.03)); border-radius: 10px; padding: 11px 14px; text-align: center; font-size: 15px; color: var(--paper); }
+  .wf-box b { font-weight: 600; }
+  .wf-ai b { display: block; font-size: 18px; font-weight: 700; color: var(--wc); line-height: 1.3; }
+  .wf-ai span { font-size: 14px; }
+  .wf-row { display: grid; grid-template-columns: 1fr 1fr; gap: 48px; }
+  .wf-line { width: 1.5px; height: 18px; background: #6b5c49; margin: 0 auto; }
+  .wf-split, .wf-merge { position: relative; height: 26px; }
+  .wf-split::before, .wf-merge::before { content: ''; position: absolute; left: 50%; width: 1.5px; height: 13px; background: #6b5c49; }
+  .wf-split::before { top: 0; } .wf-merge::before { bottom: 0; }
+  .wf-split::after, .wf-merge::after { content: ''; position: absolute; left: 25%; right: 25%; height: 13px; border: 1.5px solid #6b5c49; }
+  .wf-split::after { bottom: 0; border-bottom: none; } .wf-merge::after { top: 0; border-top: none; }
+  .wf-note { font-size: 11.5px; color: var(--paper-dim); margin-top: 12px; }
+  @media (max-width: 560px) { .wf-row { gap: 16px; } .wf-box { font-size: 13.5px; } .wf-ai b { font-size: 16px; } .wf-ai span { font-size: 12.5px; } }
   .ai-rules { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px 14px; font-size: 12.5px; }
   @media (max-width: 560px) { .ai-rules { grid-template-columns: 1fr; } }
-  .ai-rules div b { color: var(--violet); font-weight: 600; margin-right: 6px; }
+  .ai-rules div b { color: var(--rc, var(--violet)); font-weight: 600; margin-right: 6px; }
+  /* AI 탭 넓은 화면 + 2단 · 세로 압축 */
+  .wrap.wide { max-width: 1200px; }
+  .ai-cols { display: grid; grid-template-columns: minmax(0, 1.75fr) minmax(0, 1fr); gap: 12px; align-items: stretch; margin-bottom: 12px; }
+  .ai-cols .rl-card { margin-bottom: 0; display: flex; flex-direction: column; }
+  .ai-cols .rl-bd { flex: 1; display: flex; flex-direction: column; justify-content: center; }
+  @media (max-width: 900px) { .ai-cols { grid-template-columns: 1fr; } }
+  .ai-hub .rl-ch { padding: 9px 14px; }
+  .ai-hub .rl-bd { padding: 8px 14px 10px; }
+  .ai-intro p { margin-bottom: 10px; }
+  .ai-kpis { margin-bottom: 10px; }
+  .ai-kpi { padding: 6px 12px; display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
+  .ai-kpi .v { font-size: 17px; }
+  .ai-proj { padding: 3px 0; font-size: 13px; }
+  .ai-thead { padding-bottom: 4px; margin-bottom: 2px; }
+  .ai-bar { height: 7px; }
+  .wf { max-width: 400px; width: 100%; }
+  .wf-box { padding: 6px 10px; font-size: 13px; border-radius: 8px; }
+  .wf-ai b { font-size: 15px; }
+  .wf-ai span { font-size: 12px; }
+  .wf-row { gap: 28px; }
+  .wf-line { height: 10px; }
+  .wf-split, .wf-merge { height: 16px; }
+  .wf-split::before, .wf-merge::before, .wf-split::after, .wf-merge::after { height: 8px; }
+  .wf-note { margin-top: 6px; font-size: 11px; }
   .ai-postshead { font-size: 11px; letter-spacing: 0.18em; color: var(--paper-dim); text-transform: uppercase; margin: 22px 0 12px; }
 </style>
 </head>
@@ -646,67 +687,71 @@
 
   // ── AI 탭: 공개용 관제센터 (익명화 정적 데이터 · 내부 원본과 연결되지 않음) ──
   // 실제 프로젝트명·상세 작업·내부 링크는 넣지 않는다. 수동 검토 후 갱신.
-  const AI_STAGES = ['아이디어', '설계', '개발', '운영', '고도화'];
   const AI_PUBLIC = {
     asof: '2026-11-27',
-    tasks: { open: 33, doing: 5 },
+    // pct: 잠정 완성도(AI 평가, 실측 아님) · null = 미평가
     projects: [
-      { id: 'A', area: '개인 기록·포트폴리오 사이트', desc: '기록 · 공개 수익률 · AI 작업 소개', stage: 5, state: 'live', note: '운영 · 기능 확장' },
-      { id: 'B', area: '시장 데이터 대시보드', desc: '다국가 섹터·수급 시각화', stage: 4, state: 'live', note: '운영 · 과거 데이터 축적' },
-      { id: 'C', area: '뉴스 브리핑 자동화', desc: '일일 브리핑 초안 · 승인 · 발행', stage: 4, state: 'live', note: '운영 · 발행 자동화 전환' },
-      { id: 'D', area: '모의투자 웹앱', desc: '가상 주문 · 잔고 · 수익률', stage: 4, state: 'live', note: '운영 · 개선 대기' },
-      { id: 'E', area: '생활 기록 웹앱', desc: '읽기 · 메모 · 응원', stage: 4, state: 'live', note: '운영 · 차기 버전 준비' },
-      { id: 'F', area: '공시 알림 봇', desc: '수집 · 중복 방지 · 메신저 알림', stage: 3, state: 'dev', note: '개발 · 연동 검증' },
-      { id: 'G', area: '업무 문서 자동화', desc: '정형 데이터 입력 · 문서 초안', stage: 2, state: 'dev', note: '설계 · 양식 검증' },
-      { id: 'H', area: 'AI 협업 인프라', desc: '공유 메모리 · 통합 할 일 · AI 간 메시지', stage: 4, state: 'live', note: '운영 · 규칙 검증' },
-      { id: 'I', area: '소규모 웹서비스', desc: '가벼운 웹게임 · 테스트류', stage: 1, state: 'idea', note: '아이디어 · 레퍼런스 정리' },
+      { id: 'H', area: 'AI 협업 인프라', pct: 93, st: 'done', c: '#c9a07a' },
+      { id: 'J', area: '매매 알림 자동화', pct: 80, st: 'done', c: '#f0a15e' },
+      { id: 'B', area: '시장 데이터 대시보드', pct: 75, st: 'doing', c: '#6aa5f0' },
+      { id: 'C', area: '뉴스 브리핑 자동화', pct: 70, st: 'doing', c: '#e6c548' },
+      { id: 'E', area: '생활 기록 웹앱', pct: 60, st: 'doing', c: '#e886b6' },
+      { id: 'D', area: '모의투자 웹앱', pct: 55, st: 'doing', c: '#b195e8' },
+      { id: 'A', area: '개인 기록·포트폴리오 사이트', pct: 53, st: 'doing', c: '#62c08f' },
+      { id: 'G', area: '업무 문서 자동화', pct: 38, st: 'doing', c: '#b8b8b8' },
+      { id: 'I', area: '소규모 웹서비스', pct: 10, st: 'idea', c: '#f09a62' },
+      { id: 'F', area: '공시 알림 봇', pct: null, st: 'na', c: '#e07a6e' },
     ],
   };
   function aiHub() {
-    const P = AI_PUBLIC.projects;
-    const n = (st) => P.filter((p) => p.state === st).length;
-    const badge = { live: ['운영', 'live'], dev: ['개발', 'dev'], idea: ['구상', 'idea'] };
-    const kpi = (l, v, sub) => `<div class="rl-kpi"><div class="l">${l}</div><div class="v">${v}</div><div class="s">${sub}</div></div>`;
+    const P = AI_PUBLIC.projects, N = P.length;
+    const cnt = (f) => P.filter(f).length;
+    const done = cnt((p) => p.st === 'done'), doing = cnt((p) => p.st === 'doing'), rest = N - done - doing;
+    const pc = (k) => Math.round(k / N * 100) + '%';
+    const ST = { done: ['완료', 'st-done'], doing: ['진행 중', 'st-doing'], idea: ['구상 중', 'st-idea'], na: ['미확인', 'st-na'] };
+    const kpi = (l, v, sub, color) => `<div class="ai-kpi"><div class="l">${l}</div><div class="v" style="color:${color}">${v}${sub ? `<small>${sub}</small>` : ''}</div></div>`;
     const rows = P.map((p) => `
-      <div class="ai-proj">
-        <span class="ai-id">${esc(p.id)}</span>
-        <span class="ai-pname">${esc(p.area)}<span class="ai-pdesc">${esc(p.desc)}</span></span>
-        <span class="ai-prog"><span class="ai-steps">${AI_STAGES.map((_, i) => `<i class="${i < p.stage ? 'on' : ''}"></i>`).join('')}</span><span class="ai-stage">${esc(p.note)}</span></span>
-        <span class="ai-badge ${badge[p.state][1]}">${badge[p.state][0]}</span>
+      <div class="ai-proj" style="--pc:${p.c}">
+        <span class="ai-pname"><i>${esc(p.id)}</i>${esc(p.area)}</span>
+        <span class="ai-bar"><b style="width:${p.pct || 0}%"></b></span>
+        <span class="ai-pct${p.pct == null ? ' na' : ''}">${p.pct == null ? '미평가' : p.pct + '%'}</span>
+        <span class="ai-st ${ST[p.st][1]}">${ST[p.st][0]}</span>
       </div>`).join('');
     return `
       <section class="ai-hub" aria-label="AI 프로젝트 관제센터">
         <div class="ai-intro"><h2>AI 프로젝트 관제센터</h2><p>ChatGPT와 Claude를 함께 써서 만드는 개인 프로젝트 현황입니다 · 프로젝트는 익명 코드로 표시합니다</p></div>
         <div class="ai-kpis">
-          ${kpi('프로젝트', P.length + '개', '익명 코드 A~' + P[P.length - 1].id)}
-          ${kpi('운영 중', n('live') + '개', '개발 ' + n('dev') + ' · 구상 ' + n('idea'))}
-          ${kpi('열린 작업', AI_PUBLIC.tasks.open + '건', '통합 할 일 기준')}
-          ${kpi('진행 중 작업', AI_PUBLIC.tasks.doing + '건', '병렬 진행')}
+          ${kpi('전체 프로젝트', N + '개', '', 'var(--paper)')}
+          ${kpi('진행 중', pc(doing), doing + '개', '#7fb0ec')}
+          ${kpi('완료', pc(done), done + '개', '#7ec98f')}
+          ${kpi('구상·미확인', pc(rest), rest + '개', '#e2c15a')}
         </div>
-        <div class="rl-card"><div class="rl-ch"><b>프로젝트 단계</b><span>${AI_STAGES.join(' → ')}</span></div><div class="rl-bd">${rows}</div></div>
-        <div class="rl-card"><div class="rl-ch"><b>AI 협업 구조</b><span>두 AI가 하나의 기록을 공유</span></div><div class="rl-bd">
-          <div class="ai-flow">
-            <div class="ai-node wide"><div class="t"><span>DIRECT</span>사용자</div><ul><li>목표·우선순위 결정</li><li>결과 확인 후 승인</li><li>배포·삭제·비용 발생 작업 승인</li></ul></div>
-            <div class="ai-node"><div class="t"><span>PLAN</span>ChatGPT</div><ul><li>기획·구조 설계</li><li>의사결정·기준 정리</li><li>기록·인수인계</li></ul></div>
-            <div class="ai-node"><div class="t"><span>BUILD</span>Claude</div><ul><li>코드 구현·배포</li><li>데이터 검증·오류 진단</li><li>작업 결과 기록</li></ul></div>
-            <div class="ai-arrow">↓ 작업 시작 시 최신 기록 조회 · 작업 후 결과 기록 ↑</div>
-            <div class="ai-node wide"><div class="t"><span>MEMORY</span>공유 메모리 (Notion)</div><ul><li>공통 운영 지침 · 프로젝트별 기준 기록 · 통합 할 일 · 의사결정 로그 · AI 간 메시지함</li><li>AI를 바꿔도 별도 인수인계 없이 같은 맥락에서 이어서 작업</li></ul></div>
+        <div class="ai-cols">
+        <div class="rl-card"><div class="rl-ch"><b>프로젝트별 완성도</b><span>잠정 · AI 평가</span></div><div class="rl-bd">
+          <div class="ai-thead"><span>프로젝트</span><span></span><span>완성도</span><span>상태</span></div>${rows}</div></div>
+        <div class="rl-card"><div class="rl-ch"><b>My AI Workflow</b><span>두 AI가 하나의 기록을 공유</span></div><div class="rl-bd">
+          <div class="wf">
+            <div class="wf-box" style="--wc:#8a7c69"><b>USER</b> · 기획 및 의사결정</div>
+            <div class="wf-split"></div>
+            <div class="wf-row">
+              <div class="wf-box wf-ai" style="--wc:#62c08f;--wb:rgba(98,192,143,0.10)"><b>ChatGPT</b><span>기획 · 분석 · 설계</span></div>
+              <div class="wf-box wf-ai" style="--wc:#f0a15e;--wb:rgba(240,161,94,0.10)"><b>Claude</b><span>개발 · 구현 · 검증</span></div>
+            </div>
+            <div class="wf-merge"></div>
+            <div class="wf-box" style="--wc:#8a7c69"><b>Shared Memory</b> · 공통 지식 및 업무 상태 관리</div>
+            <div class="wf-line"></div>
+            <div class="wf-box" style="--wc:#6aa5f0;--wb:rgba(106,165,240,0.08)"><b>Project Control Center</b> · 통합 프로젝트 관리</div>
           </div>
+          <div class="wf-note">두 AI의 역할은 작업에 따라 유연하게 변경</div>
         </div></div>
-        <div class="rl-card"><div class="rl-ch"><b>운영 원칙</b><span>두 AI 공통</span></div><div class="rl-bd ai-rules">
-          <div><b>01</b>사실 · 추정 · 미확인을 나눠 기록</div>
-          <div><b>02</b>실제 검증 후에만 완료 처리</div>
-          <div><b>03</b>기존 기록은 지우지 않고 덧붙이기</div>
-          <div><b>04</b>배포·삭제·비용은 사용자 승인 후 실행</div>
-          <div><b>05</b>인증정보·기밀은 기록하지 않음</div>
-          <div><b>06</b>데이터 임의 생성 금지 · 출처 명시</div>
-        </div></div>
-        <div class="rl-foot">기준일 ${AI_PUBLIC.asof} · 수동 갱신 스냅숏입니다. 단계는 기록에 근거한 정성 분류이며 실측 진척률이 아닙니다. 프로젝트 코드는 실제 명칭과 연결 정보를 공개하지 않습니다.</div>
+        </div>
+        <div class="rl-foot">기준일 ${AI_PUBLIC.asof} · 수동 갱신 스냅숏입니다. 완성도는 AI가 기록을 근거로 매긴 잠정 평가이며 실측 진척률이 아닙니다. 프로젝트 코드는 실제 명칭과 연결 정보를 공개하지 않습니다.</div>
         <div class="ai-postshead">AI 작업 기록</div>
       </section>`;
   }
 
   function render() {
+    document.querySelector('.wrap').classList.toggle('wide', filter === 'AI' && !permalinkId);
     if (filter === '실전기록') { renderReal(); return; }
     if (filter === '방명록') {
       if (gb === null) {
